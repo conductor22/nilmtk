@@ -2,7 +2,6 @@ from nilmtk import DataSet
 from nilmtk.dataset_converters import convert_refit
 
 # convert_refit("C:/Users/Megapoort/Desktop/nilmdata/refitcsv", "C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
-# print("converted")
 refit_ds = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
 
 from pprint import pprint
@@ -25,9 +24,12 @@ pprint(refit_ds.buildings[1].elec)
 print("*************************")
 pprint(refit_ds.buildings[1].metadata)
 '''
+print(f"refit_ds.buildings[1].elec, {type(refit_ds.buildings[1].elec)}")
 pprint(refit_ds.buildings[1].elec)
 elec = refit_ds.buildings[1].elec
+print(f"refit_ds.buildings[1].elec[1], {type(refit_ds.buildings[1].elec[1])}")
 pprint(elec[1])
+print(f"refit_ds.buildings[1].elec[1].available_columns, type({refit_ds.buildings[1].elec[1].available_columns})")
 pprint(elec[1].available_columns())
 df = next(elec[1].load(ac_type="active", sample_period=60))
 print(df.head())
