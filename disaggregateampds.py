@@ -70,6 +70,12 @@ meter_info = [
 ]
 indices = [meter.identifier.instance for meter in top_5_train_elec.meters]
 
+top_5_in_test = []
+for i, index in enumerate(indices):
+    meter = ground_truth[index]
+    top_5_in_test.append(meter)
+draw_plot(top_5_in_test, "Top 5 train elecs in test dataset")
+
 for i, index in enumerate(indices):
     device = ground_truth[index]
     fhmm_device_predictions = fhmm_predictions[index]
