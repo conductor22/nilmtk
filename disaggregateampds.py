@@ -2,12 +2,14 @@ from nilmtk import DataSet, TimeFrame, MeterGroup, HDFDataStore
 import matplotlib.pyplot as plt
 from pprint import pprint
 from nilmtk.legacy.disaggregate import CombinatorialOptimisation, FHMM
-from nilmtk.metrics import f1_score
+from nilmtk.metrics import f1_score, rms_error_power
 import nilmtk.utils
 from matplotlib import rcParams
+from plotting import draw_plot
+import pandas as pd
 
 
-
+# Datensets erstellen
 dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
 dataset_elec = dataset.buildings[1].elec
 
@@ -18,82 +20,34 @@ dataset.set_window(start="2013-01-01", end="2013-01-03")
 train.set_window(start="2013-01-01", end="2013-01-02")
 test.set_window(start="2013-01-02", end="2013-01-03")
 
-'''
-fig, axs = plt.subplots(2, 2, figsize=(20,10))
+# Training plots
+train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
+draw_plot(train_test_mains, "Trainset & Testset Mains")
 
-dataset.buildings[1].elec.plot(ax=axs[0 ,0])
-axs[0, 0].set_title("whole data")
-axs[0, 0].legend().remove()
-
-
-
-dataset.buildings[1].elec.plot(ax=axs[1 ,0])
-axs[0, 1].set_title("windowed data")
-axs[0, 1].legend().remove()
-
-train.buildings[1].elec.plot(ax=axs[0 ,1])
-axs[1, 0].set_title("train data")
-axs[1, 0].legend().remove()
-test.buildings[1].elec.plot(ax=axs[1 ,1])
-axs[1, 1].set_title("test data")
-axs[1, 1].legend().remove()
-
-plt.subplots_adjust(hspace=0.6)
-plt.tight_layout()
-plt.show()
-'''
 top_5_train_elec = train.buildings[1].elec.submeters().select_top_k(k=5)
-print(top_5_train_elec)
+all_meters = [train.buildings[1].elec.mains(), top_5_train_elec]
+draw_plot(all_meters, "main & top 5 meters")
 
-top_5_train_elec.plot()
-plt.title("train: top 5 elec meters")
-plt.show()
-test.buildings[1].elec.mains().plot()
-plt.title("train: main elec (site meter)")
-plt.show()
 
+# FHMM disaggregation
 fhmm = FHMM()
 fhmm.train(top_5_train_elec)
 fhmm_output = HDFDataStore("C:/Users/Megapoort/Desktop/nilmdata/ampds/fhmm.h5", "w")
 
-print("*******************************************")
-print("fhmm training done")
-print("*******************************************")
-
-# fhmm_output.close()
-# fhmm_test = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/fhmm.h5")
-# fhmm_test.plot()
-# plt.show()
-
 fhmm.disaggregate(test.buildings[1].elec.mains(), fhmm_output)
 fhmm_output.close()
 
-print("*******************************************")
-print("fhmm disaggregation done")
-print("*******************************************")
-
-
+# CO disaggregation
 co = CombinatorialOptimisation()
 co.train(top_5_train_elec)
 co_output = HDFDataStore("C:/Users/Megapoort/Desktop/nilmdata/ampds/co.h5", "w")
 
-print("*******************************************")
-print("co training done")
-print("*******************************************")
-
 co.disaggregate(test.buildings[1].elec.mains(), co_output)
 co_output.close()
 
-print("*******************************************")
-print("co disaggregation done")
-print("*******************************************")
 
-
-
-
-
+# Auswertung
 ground_truth = test.buildings[1].elec
-
 fhmm_dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/fhmm.h5")
 co_dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/co.h5")
 fhmm_predictions = fhmm_dataset.buildings[1].elec
@@ -103,60 +57,23 @@ print("FHMM f1-score:")
 print(f1_score(ground_truth=ground_truth, predictions=fhmm_predictions))
 print("CO f1-score:")
 print(f1_score(ground_truth=ground_truth, predictions=co_predictions))
+# print("FHMM RMSE:")
+# print("CO RMSE:")
 
-# print("FHMM time window")
-# print(fhmm_predictions.index.min(), "-", fhmm_predictions.index.max())
-# print("CO time window")
-# print(co_predictions.index.min(), "-", co_predictions.index.max())
+draw_plot(fhmm_predictions, "FHMM Meters")
+draw_plot(co_predictions, "CO Meters")
+draw_plot(ground_truth, "Ground Truth")
 
-fhmm_predictions.plot()
-plt.title("test: fhmm")
-plt.show()
-co_predictions.plot()
-plt.title("test: co")
-plt.show()
-ground_truth.plot()
-plt.title("test: ground truth")
-plt.show()
-
-indices = [18, 12, 16, 20, 11]
-
-for i, index in enumerate(indices):
-    ground_truth[index].plot()
-plt.title("test: 'top 5' ground truth")
-plt.show()
+meter_info = [
+    {"index": meter.identifier.instance, "type": meter.appliances[0].type if meter.appliances else "unkown"}
+    for meter in top_5_train_elec.meters
+]
+indices = [meter.identifier.instance for meter in top_5_train_elec.meters]
 
 for i, index in enumerate(indices):
     device = ground_truth[index]
     fhmm_device_predictions = fhmm_predictions[index]
     co_device_predictions = co_predictions[index]
-
-    rcParams["figure.figsize"] = (16, 8)
-    device_plot = device.plot()
-    fhmm_plot = fhmm_device_predictions.plot()
-    co_plot = co_device_predictions.plot()
-    plt.title(f"Device {index}")
-    plt.legend(["Ground Truth", "FHMM", "CO"])
-    plt.xlabel("Time")
-    plt.ylabel("Power (W)")
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
-'''
-device = ground_truth[20]
-fhmm_device_predictions = fhmm_predictions[20]
-co_device_predictions = co_predictions[20]
-
-plt.figure(figsize=(15, 8))
-device.plot()
-fhmm_device_predictions.plot()
-co_device_predictions.plot()
-
-plt.legend(["Ground Truth", "FHMM", "CO"])
-plt.xlabel("Time")
-plt.ylabel("Power (W)")
-plt.grid()
-plt.tight_layout()
-plt.show()
-'''
-
+    all_meters = [device, fhmm_device_predictions, co_device_predictions]
+    title = "Device " + str(index)
+    draw_plot(all_meters, title)

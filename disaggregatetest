@@ -4,6 +4,7 @@ from nilmtk.metrics import f1_score
 from nilmtk.legacy.disaggregate import CombinatorialOptimisation, FHMM
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+from pprint import pprint
 
 dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
 
@@ -16,7 +17,8 @@ test.set_window(start="2014-07-01", end="2014-10-01")
 train_elec = train.buildings[1].elec
 test_elec = test.buildings[1].elec
 
-
+pprint(dir(train.buildings[1].elec))
+pprint(dir(train.buildings[1].elec.identifier))
 # print(dataset.buildings[1].elec.get_timeframe())    # TimeFrame(start='2013-10-09 14:06:17+01:00', end='2015-07-10 12:56:32+01:00', empty=False)
 # print(train.buildings[1].elec.get_timeframe())      # TimeFrame(start='2014-03-10 00:00:00+00:00', end='2014-03-25 00:00:00+00:00', empty=False)
 # print(test.buildings[1].elec.get_timeframe())       # TimeFrame(start='2014-03-25 00:00:00+00:00', end='2014-04-01 00:00:00+01:00', empty=False)

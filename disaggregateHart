@@ -12,13 +12,13 @@ from pprint import pprint
 
 rcParams['figure.figsize'] = (13, 6)
 
-data = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
+data = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
 print("Loaded", len(data.buildings), "buildings")
 
 elec = data.buildings[1].elec
 print(elec.get_timeframe())
 
-data.set_window(start="2014-01-01", end="2015-01-01")
+data.set_window(start="2014-01-01", end="2014-01-03")
 
 mains = elec.mains()
 subs = elec.submeters()
