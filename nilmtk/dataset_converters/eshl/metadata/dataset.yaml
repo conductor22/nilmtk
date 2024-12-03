@@ -1,0 +1,10 @@
+name: eshl
+# meter_devices:
+#   generic:
+#     model: Generic Meter
+#     sample_period: 1
+#     measurements:
+#       - physical_quantity: power
+#         type: active
+#       - physical_quantity: power
+#         type: reactive

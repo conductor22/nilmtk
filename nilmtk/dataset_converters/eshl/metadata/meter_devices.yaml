@@ -1,0 +1,22 @@
+METER:
+  model: model1
+  sample_period: 1   # the interval between samples. In seconds.
+  max_sample_period: 120   # Max allowable interval between samples. Seconds.
+  measurements:
+    - physical_quantity: "power"
+      type: "active"
+      unit: "W"
+    - physical_quantity: "power"
+      type: "reactive"
+      unit: "var"
+WIZ:
+  model: model2
+  sample_period: 1   # the interval between samples. In seconds.
+  max_sample_period: 120   # Max allowable interval between samples. Seconds.
+  measurements:
+    - physical_quantity: "power"
+      type: "active"
+      unit: "W"
+    - physical_quantity: "power"
+      type: "reactive"
+      unit: "var"

@@ -1,0 +1,10 @@
+import yaml
+import os
+from nilmtk.utils import get_module_directory
+
+with open(os.path.join(get_module_directory(), 'dataset_converters', 'eshl', 'metadata', 'dataset.yaml'), "r") as file:
+    try:
+        yaml.safe_load(file)
+        print("YAML is valid.")
+    except yaml.YAMLError as e:
+        print(f"Error in YAML: {e}")
