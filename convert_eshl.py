@@ -3,7 +3,9 @@ import numpy as np
 from nilmtk.utils import get_datastore, check_directory_exists, get_module_directory
 import os
 from nilm_metadata import convert_yaml_to_hdf5, save_yaml_to_datastore
+from nilmtk.measurement import LEVEL_NAMES
 from pprint import pprint
+import sys
 
 def convert_eshl(input_path, output_filename, format="HDF"):
     check_directory_exists(input_path)
@@ -14,41 +16,60 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
-        key = get_key(file.rstrip(".csv"))
-        print(f"Processing file: {file}, key: {key}")
-        df = pd.read_csv(
-            csv_path, parse_dates=[0], 
-            index_col=0, skipinitialspace=True, 
-            delimiter=",", 
-            names=["Time", "P1", "P2", "P3", "Q1", "Q2", "Q3"],
-            header=0
-            )
-        
-        print(f"DataFrame shape: {df.shape}")
+        # key = get_key(file.rstrip(".csv"))
+        # print(f"Processing file: {file}, key: {key}")
+        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'Q1'], dayfirst=True)
+        df.set_index('Time', inplace=True)
+        df = df.sort_index()
+        # df = pd.read_csv(
+        #     csv_path,
+        #     parse_dates=[0],
+        #     index_col=0,
+        #     skipinitialspace=True,
+        #     delimiter=",",
+        #     usecols=['Time', 'P1', 'P2'],
+        #     header=0,
+        #     dayfirst=True
+        #     )
+        df.index = pd.to_datetime(df.index, format="%d/%m/%Y %H:%M:%S") # Konvertierung hiermit viel länger
+
+        duplicates = df.index.duplicated()
+        if duplicates.any():
+            print(f"Found {duplicates.sum()} duplicate timestamps.")
+            print(df[duplicates])
+            df = df[~duplicates]
+            print("Duplicates removed")
+
+        print("Dataframe")
         print(df.head())
 
-        #df.set_index(df.columns[0], inplace=True)
-        print(f"Columns before storing in HDF5: {df.columns}")
-        datastore.put(key, df[['P1', 'P2', 'P3', 'Q1', 'Q2', 'Q3']])
+        for col in df.columns:
+            print(f"Column: {col}")
+            key = get_key()
+            print(f"Key: {key}")
+            chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
+            chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+            chan_df.columns.set_names(["measurement", "type"], inplace=True)
 
-    datastore.close()
+            print(f"DataFrame shape: {df.shape}")
+            print(chan_df.head())
+            print(f"Columns before storing in HDF5: {df.columns}")
+            sys.stdout.flush()
+            datastore.put(key, chan_df)
 
+    # datastore.close()
 
     print('Processing metadata...')
     metadata_path = os.path.join(get_module_directory(), 'dataset_converters', 'eshl', 'metadata')
     convert_yaml_to_hdf5(metadata_path, output_filename)
+    datastore.close()
 
-# def get_key(string):
-#     split = string.split("_")
-#     assert split[0].startswith("METER") or split[0].startswith("WIZ")
-#     meter = split[0]
-#     clamp_number = split[1].replace("Clamp", "")
-#     return meter + "/" + "Clamp" + clamp_number
-def get_key(string):
+
+def get_key():
     if not hasattr(get_key, "counter"):
-        get_key.counter = 1  # Initialize the counter on the first call
+        get_key.counter = 1
     key = "building1/elec/meter" + str(get_key.counter)
-    get_key.counter += 1  # Increment the counter
+    get_key.counter += 1
     return key
 
 if __name__ == "__main__":

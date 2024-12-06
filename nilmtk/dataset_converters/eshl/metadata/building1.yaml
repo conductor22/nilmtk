@@ -6,10 +6,20 @@ elec_meters:
     site_meter: true
     data_location: METER/Clamp12
   2:
+    device_model: METER
+    submeter_of: 0
+    site_meter: true
+    data_location: METER/Clamp12
+  3:
     device_model: WIZ
     submeter_of: 0
     site_meter: true
-    data_location: WIZ/Clamp12
+    data_location: WIZ/Clamp03
+  4:
+    device_model: WIZ
+    submeter_of: 0
+    site_meter: true
+    data_location: WIZ/Clamp03
 appliances:
 # - type: irgendwas
 #   instance: 1
@@ -17,7 +27,7 @@ appliances:
 # - type: nochwas
 #   instance: 1
 #   meters: [2]
-- original_name: Fridge
+- original_name: fridge
   type: fridge
   instance: 1
-  meters: [2]
+  meters: [1]

@@ -35,6 +35,7 @@ import pandas as pd
 
 #     f.visititems(print_attrs)
 
+
 import h5py
 
 with h5py.File("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", "r") as f:
@@ -66,47 +67,42 @@ with h5py.File("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", "r") as f:
                     print("Shape:", dataset.shape)
                     print("First 5 rows of data:", dataset[:5])
 
-
-
-
 dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5")
-'''
-for building in dataset.buildings.values():
-    print(f"building: {building}")
-    for meter in building.elec.meters:
-        print(f"meter: {meter}")
-
-building = dataset.buildings[1]  # Replace with your building ID
-for meter in building.elec.meters:
-    print(f"Meter {meter}:")
-    df = next(meter.load())
-    print(df.head())  # Print first few rows to see the data
-    print(df.shape)   # Print the shape to see if data exists
-'''
-#draw_plot(dataset.buildings[1].elec, "test")
-
-
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-
-df = pd.read_hdf("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", key="building1/elec/meter1/table", columns=['P1'])
-
-print(df.head())
-
-df = pd.DataFrame(df['data'].tolist(), columns=["time", "P1", "P2", "P3", "Q1", "Q2", "Q3"])
-pprint(df)
-df['time'] = pd.to_datetime(df['time'], unit='ns')
-
-print(df.head())
-
-plt.figure(figsize=(10, 6))
-plt.plot(df['time'], df['P1'])
-plt.title("Power Consumption Over Time (P1)")
-plt.xlabel("Time")
-plt.ylabel("Power (W)")
-plt.tight_layout()
-plt.legend()
-plt.grid(True)
+print(dataset.buildings[1].elec)
+dataset.buildings[1].elec[1].plot()
 plt.show()
+dataset.buildings[1].elec[2].plot()
+plt.show()
+dataset.buildings[1].elec[3].plot()
+plt.show()
+dataset.buildings[1].elec[4].plot()
+plt.show()
+dataset.buildings[1].elec.mains().plot()
+plt.show()
+
+
+
+
+
+# import pandas as pd
+# import matplotlib.pyplot as plt
+
+# df = pd.read_hdf("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", key="building1/elec/meter1/table", columns=['P1'])
+
+# print(df.head())
+
+# df = pd.DataFrame(df['data'].tolist(), columns=["time", "P1"])
+# pprint(df)
+# df['time'] = pd.to_datetime(df['time'], unit='ns')
+
+# print(df.head())
+
+# plt.figure(figsize=(10, 6))
+# plt.plot(df['time'], df['P1'])
+# plt.title("Power Consumption Over Time (P1)")
+# plt.xlabel("Time")
+# plt.ylabel("Power (W)")
+# plt.tight_layout()
+# plt.legend()
+# plt.grid(True)
+# plt.show()
