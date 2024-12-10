@@ -1,4 +1,5 @@
 name: eshl
+timezone: Europe/Berlin
 # meter_devices:
 #   generic:
 #     model: Generic Meter

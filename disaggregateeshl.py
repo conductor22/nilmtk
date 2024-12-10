@@ -7,38 +7,10 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-#import h5py
-
-
-# with h5py.File('C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5', 'a') as f:
-#     if '/METER' not in f:
-#         group = f.create_group('/METER')
-#     else:
-#         group = f['/METER']
-
-#     group.attrs['model'] = 'Generic Meter Clamp'
-#     group.attrs['sample_period'] = 1
-#     group.attrs['measurements'] = [
-#         {'physical_quantity': 'power', 'type': 'active', 'unit': 'W'},
-#         {'physical_quantity': 'power', 'type': 'reactive', 'unit': 'var'}
-#     ]
-
-
-
-
-
-# with h5py.File("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", "r") as f:
-#     def print_attrs(name, obj):
-#         print(f"Node: {name}")
-#         for key, val in obj.attrs.items():
-#             print(f"  {key}: {val}")
-
-#     f.visititems(print_attrs)
-
-
+'''
 import h5py
 
-with h5py.File("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", "r") as f:
+with h5py.File("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5", "r") as f:
     print("Top-level keys:", list(f.keys()))  # building1
     
     building_group = f["building1"]
@@ -66,43 +38,69 @@ with h5py.File("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", "r") as f:
                     print(f"Dataset {dataset_key}:")
                     print("Shape:", dataset.shape)
                     print("First 5 rows of data:", dataset[:5])
+'''
 
-dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5")
-print(dataset.buildings[1].elec)
-dataset.buildings[1].elec[1].plot()
+
+dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
+train = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
+test = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
+dataset.buildings[1].elec.draw_wiring_graph()
 plt.show()
-dataset.buildings[1].elec[2].plot()
-plt.show()
-dataset.buildings[1].elec[3].plot()
-plt.show()
-dataset.buildings[1].elec[4].plot()
-plt.show()
-dataset.buildings[1].elec.mains().plot()
-plt.show()
+# print(dataset.metadata.get('timezone'))
+# timeframe = dataset.buildings[1].elec.mains().get_timeframe()
+# print("Start:", timeframe.start, "| tzinfo:", timeframe.start.tzinfo)
+# print("End:", timeframe.end, "| tzinfo:", timeframe.end.tzinfo)
+
+# tz naive error mit set_window() :(
+dataset.store.window = TimeFrame(start="2024-08-01", end="2024-09-01")
+train.store.window = TimeFrame(start="2024-08-01", end="2024-08-16")
+test.store.window = TimeFrame(start="2024-08-16", end="2024-09-01")
+
+# scheiß panda version
+# print(next(dataset.buildings[1].elec.mains().load()))
+
+draw_plot(dataset.buildings[1].elec.mains(), "whole set")
+train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
+draw_plot(train_test_mains, "train and test set")
+
+train_elec = train.buildings[1].elec.submeters().select_top_k(k=20)
+draw_plot(train_elec, "all meters")
+
+fhmm = FHMM()
+fhmm.train(train_elec)
+fhmm_output = HDFDataStore("E:/Users/Megapoort/eshldaten/oneetotwelve/fhmm.h5", "w")
+
+print("*** Training Done ***")
+
+fhmm.disaggregate(test.buildings[1].elec.mains(), fhmm_output)
+fhmm_output.close()
+
+print("*** Disaggregation Done ***")
+
+ground_truth = test.buildings[1].elec
+fhmm_dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/fhmm.h5")
+fhmm_predictions = fhmm_dataset.buildings[1].elec
+
+draw_plot(ground_truth, "Ground Truth")
+draw_plot(fhmm_predictions, "FHMM Meters")
 
 
+meter_info = [
+    {"index": meter.identifier.instance, "type": meter.appliances[0].type if meter.appliances else "unkown"}
+    for meter in train_elec.meters
+]
+indices = [meter.identifier.instance for meter in train_elec.meters]
 
+top_20_in_test = []
+for i, index in enumerate(indices):
+    meter = ground_truth[index]
+    top_20_in_test.append(meter)
 
+print(top_20_in_test)
 
-# import pandas as pd
-# import matplotlib.pyplot as plt
-
-# df = pd.read_hdf("C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5", key="building1/elec/meter1/table", columns=['P1'])
-
-# print(df.head())
-
-# df = pd.DataFrame(df['data'].tolist(), columns=["time", "P1"])
-# pprint(df)
-# df['time'] = pd.to_datetime(df['time'], unit='ns')
-
-# print(df.head())
-
-# plt.figure(figsize=(10, 6))
-# plt.plot(df['time'], df['P1'])
-# plt.title("Power Consumption Over Time (P1)")
-# plt.xlabel("Time")
-# plt.ylabel("Power (W)")
-# plt.tight_layout()
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+for i, index in enumerate(indices):
+    device = ground_truth[index]
+    fhmm_device_predictions = fhmm_predictions[index]
+    all_meters = [device, fhmm_device_predictions]
+    title = "Device " + str(index)
+    draw_plot(all_meters, title)

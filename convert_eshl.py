@@ -6,8 +6,10 @@ from nilm_metadata import convert_yaml_to_hdf5, save_yaml_to_datastore
 from nilmtk.measurement import LEVEL_NAMES
 from pprint import pprint
 import sys
+import time
 
 def convert_eshl(input_path, output_filename, format="HDF"):
+    start = time.time()
     check_directory_exists(input_path)
     files = [f for f in os.listdir(input_path) if os.path.isfile(os.path.join(input_path, f)) and '.csv' in f]
     # file.csv in Liste
@@ -16,21 +18,9 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
-        # key = get_key(file.rstrip(".csv"))
-        # print(f"Processing file: {file}, key: {key}")
-        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'Q1'], dayfirst=True)
+        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
         df.set_index('Time', inplace=True)
         df = df.sort_index()
-        # df = pd.read_csv(
-        #     csv_path,
-        #     parse_dates=[0],
-        #     index_col=0,
-        #     skipinitialspace=True,
-        #     delimiter=",",
-        #     usecols=['Time', 'P1', 'P2'],
-        #     header=0,
-        #     dayfirst=True
-        #     )
         df.index = pd.to_datetime(df.index, format="%d/%m/%Y %H:%M:%S") # Konvertierung hiermit viel länger
 
         duplicates = df.index.duplicated()
@@ -49,7 +39,7 @@ def convert_eshl(input_path, output_filename, format="HDF"):
             print(f"Key: {key}")
             chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
             chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
-            chan_df.columns.set_names(["measurement", "type"], inplace=True)
+            chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
 
             print(f"DataFrame shape: {df.shape}")
             print(chan_df.head())
@@ -57,13 +47,15 @@ def convert_eshl(input_path, output_filename, format="HDF"):
             sys.stdout.flush()
             datastore.put(key, chan_df)
 
-    # datastore.close()
-
     print('Processing metadata...')
     metadata_path = os.path.join(get_module_directory(), 'dataset_converters', 'eshl', 'metadata')
     convert_yaml_to_hdf5(metadata_path, output_filename)
     datastore.close()
-
+    end = time.time()
+    total = end - start
+    minutes = int(total/60)
+    seconds = total%60
+    print(f"Total time: {minutes}m{seconds:.0f}s")
 
 def get_key():
     if not hasattr(get_key, "counter"):
@@ -73,6 +65,6 @@ def get_key():
     return key
 
 if __name__ == "__main__":
-    input_path = "C:/Users/Megapoort/Desktop/nilmdata/eshl"
-    output_filename = "C:/Users/Megapoort/Desktop/nilmdata/eshl/eshl.h5"
+    input_path = "E:/Users/Megapoort/eshldaten/oneetotwelve"
+    output_filename = "E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5"
     convert_eshl(input_path, output_filename)
