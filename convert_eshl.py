@@ -18,10 +18,12 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
-        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
+        # df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
+        df = pd.read_csv(csv_path, usecols=['Time', 'P1'], dayfirst=True)
         df.set_index('Time', inplace=True)
         df = df.sort_index()
         df.index = pd.to_datetime(df.index, format="%d/%m/%Y %H:%M:%S") # Konvertierung hiermit viel länger
+        df = df.tz_localize('Europe/Berlin')
 
         duplicates = df.index.duplicated()
         if duplicates.any():
@@ -51,6 +53,7 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     metadata_path = os.path.join(get_module_directory(), 'dataset_converters', 'eshl', 'metadata')
     convert_yaml_to_hdf5(metadata_path, output_filename)
     datastore.close()
+
     end = time.time()
     total = end - start
     minutes = int(total/60)
@@ -65,6 +68,6 @@ def get_key():
     return key
 
 if __name__ == "__main__":
-    input_path = "E:/Users/Megapoort/eshldaten/oneetotwelve"
-    output_filename = "E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5"
+    input_path = "E:/Users/Megapoort/eshldaten/csv"
+    output_filename = "E:/Users/Megapoort/eshldaten/csv/eshl.h5"
     convert_eshl(input_path, output_filename)

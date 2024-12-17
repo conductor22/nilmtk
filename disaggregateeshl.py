@@ -7,57 +7,19 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-'''
-import h5py
-
-with h5py.File("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5", "r") as f:
-    print("Top-level keys:", list(f.keys()))  # building1
-    
-    building_group = f["building1"]
-    
-    print("Groups and Datasets within building1:", list(building_group.keys()))
-    
-    elec_group = building_group["elec"]
-    
-    print("Groups and Datasets within elec:", list(elec_group.keys()))
-    
-    for meter_key in elec_group.keys():
-        meter_data = elec_group[meter_key]
-        
-        if isinstance(meter_data, h5py.Dataset):
-            print(f"Dataset for {meter_key}:")
-            print("Shape:", meter_data.shape)
-            print("First 5 rows of data:", meter_data[:5])
-        else:
-            print(f"{meter_key} is a group")
-            print(f"Content of {meter_key}: {list(meter_data.keys())}")
-
-            for dataset_key in meter_data.keys():
-                dataset = meter_data[dataset_key]
-                if isinstance(dataset, h5py.Dataset):
-                    print(f"Dataset {dataset_key}:")
-                    print("Shape:", dataset.shape)
-                    print("First 5 rows of data:", dataset[:5])
-'''
 
 
 dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
 train = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
 test = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
-dataset.buildings[1].elec.draw_wiring_graph()
-plt.show()
-# print(dataset.metadata.get('timezone'))
-# timeframe = dataset.buildings[1].elec.mains().get_timeframe()
-# print("Start:", timeframe.start, "| tzinfo:", timeframe.start.tzinfo)
-# print("End:", timeframe.end, "| tzinfo:", timeframe.end.tzinfo)
 
 # tz naive error mit set_window() :(
-dataset.store.window = TimeFrame(start="2024-08-01", end="2024-09-01")
-train.store.window = TimeFrame(start="2024-08-01", end="2024-08-16")
-test.store.window = TimeFrame(start="2024-08-16", end="2024-09-01")
-
-# scheiß panda version
-# print(next(dataset.buildings[1].elec.mains().load()))
+# dataset.store.window = TimeFrame(start="2024-08-01", end="2024-09-01")
+# train.store.window = TimeFrame(start="2024-08-01", end="2024-08-16")
+# test.store.window = TimeFrame(start="2024-08-16", end="2024-09-01")
+dataset.set_window(start="2024-08-01", end="2024-09-01")
+train.set_window(start="2024-08-01", end="2024-08-16")
+test.set_window(start="2024-08-16", end="2024-09-01")
 
 draw_plot(dataset.buildings[1].elec.mains(), "whole set")
 train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]

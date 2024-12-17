@@ -1,0 +1,210 @@
+instance: 1
+elec_meters:
+  1:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp01
+    phase: 1
+  2:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp01
+    phase: 2
+  3:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp01
+    phase: 3
+  4:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp02
+    phase: 1
+  5:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp02
+    phase: 2
+  6:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp02
+    phase: 3
+  7:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp03
+    phase: 1
+  8:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp03
+    phase: 2
+  9:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp03
+    phase: 3
+  10:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp04
+    phase: 1
+  11:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp04
+    phase: 2
+  12:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp04
+    phase: 3
+  13:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp05
+    phase: 1
+  14:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp05
+    phase: 2
+  15:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp05
+    phase: 3
+  16:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp06
+    phase: 1
+  17:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp06
+    phase: 2
+  18:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp06
+    phase: 3
+  19:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp07
+    phase: 1
+  20:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp07
+    phase: 2
+  21:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp07
+    phase: 3
+  22:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp08
+    phase: 1
+  23:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp08
+    phase: 2
+  24:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp08
+    phase: 3
+  25:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp09
+    phase: 1
+  26:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp09
+    phase: 2
+  27:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp09
+    phase: 3
+  28:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp10
+    phase: 1
+  29:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp10
+    phase: 2
+  30:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp10
+    phase: 3
+  31:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp11
+    phase: 1
+  32:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp11
+    phase: 2
+  33:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp11
+    phase: 3
+  34:
+    device_model: METER
+    submeter_of: 37
+    data_location: METER/Clamp12
+    phase: 1
+  35:
+    device_model: METER
+    submeter_of: 38
+    data_location: METER/Clamp12
+    phase: 2
+  36:
+    device_model: METER
+    submeter_of: 39
+    data_location: METER/Clamp12
+    phase: 3
+  37:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp01
+    phase: 1
+  38:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp01
+    phase: 2
+  39:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp01
+    phase: 3
+
+appliances: []
+# - type: irgendwas
+#   instance: 1
+#   meters: [1]
+# - type: nochwas
+#   instance: 1
+#   meters: [2]
+
+# - original_name: fridge
+#   type: fridge
+#   instance: 1
+#   meters: [1]
