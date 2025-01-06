@@ -10,7 +10,8 @@ def draw_plot(input_data, title="Title"):
         input_data = [input_data]
 
     for i, item in enumerate(input_data):
-    
+        # print("head: ", item.head())
+        # print("tail: ", item.tail())
         if isinstance(item, pd.DataFrame):
             for appliance in item.columns:
                 ax.plot(item.index, item[appliance], label=appliance)

@@ -304,6 +304,7 @@ class FHMMExact(Disaggregator):
                     decoded_power_array.append(decoded_power)
 
                 appliance_powers = pd.DataFrame(decoded_power_array[0], dtype='float32')
+                appliance_powers.index = test_mains.index
                 test_prediction_list.append(appliance_powers)
         
         return test_prediction_list

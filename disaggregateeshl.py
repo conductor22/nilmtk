@@ -9,9 +9,9 @@ from plotting import draw_plot
 import pandas as pd
 
 
-dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
-train = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
-test = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
+dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+train = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+test = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
 
 # tz naive error mit set_window() :(
 # dataset.store.window = TimeFrame(start="2024-08-01", end="2024-09-01")
