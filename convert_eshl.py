@@ -18,8 +18,8 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
-        # df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
-        df = pd.read_csv(csv_path, usecols=['Time', 'P1'], dayfirst=True)
+        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
+        # df = pd.read_csv(csv_path, usecols=['Time', 'P1'], dayfirst=True)
         df.set_index('Time', inplace=True)
         df = df.sort_index()
         df.index = pd.to_datetime(df.index, format="%d/%m/%Y %H:%M:%S") # Konvertierung hiermit viel länger
@@ -32,6 +32,9 @@ def convert_eshl(input_path, output_filename, format="HDF"):
             df = df[~duplicates]
             print("Duplicates removed")
 
+        df['P_total'] = df['P1'] + df['P2'] + df['P3']
+        df.drop(columns=['P1', 'P2', 'P3'], inplace=True)
+        
         print("Dataframe")
         print(df.head())
 

@@ -26,6 +26,7 @@ wiz01 = df_list[12]
 haushalt = wiz01.copy()
 for i in range(13, 19):
     haushalt -= df_list[i]
+    draw_plot(df_list[i], title=f"wiz{i-11}")
 
 df_all = [meter_1_to_12, haushalt, wiz01]
 

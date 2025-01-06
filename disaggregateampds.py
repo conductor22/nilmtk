@@ -2,25 +2,37 @@ from nilmtk import DataSet, TimeFrame, MeterGroup, HDFDataStore
 import matplotlib.pyplot as plt
 from pprint import pprint
 # from nilmtk.legacy.disaggregate import CombinatorialOptimisation, FHMM, MLE
-from nilmtk.disaggregate import CO, FHMMExact, Mean
+from nilmtk.disaggregate import CO, FHMMExact, Mean, Hart85
 from nilmtk.metrics import f1_score, rms_error_power
 import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
+import nilmtk_contrib
 
-
+print(nilmtk_contrib.__version__)
 
 # Datensets erstellen
-dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
-dataset_elec = dataset.buildings[1].elec
+dataset = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
+train = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
+test = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
 
-train = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
-test = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
+df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
 
-dataset.set_window(start="2013-01-01", end="2013-01-03")
-train.set_window(start="2013-01-01", end="2013-01-02")
-test.set_window(start="2013-01-02", end="2013-01-03")
+# start_date = df.index[0].date()
+# end_date = df.index[-1].date()
+# print(start_date)
+# print(end_date)
+
+start_date = pd.Timestamp("2013-01-01")
+end_date = pd.Timestamp("2013-02-01")
+
+ratio = 0.8 # 80% train, 20% test
+train_test_split_point = start_date + (end_date - start_date) * ratio
+
+dataset.set_window(start=start_date, end=end_date)
+train.set_window(start=start_date, end=train_test_split_point)
+test.set_window(start=train_test_split_point, end=end_date)
 
 # dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
 # train = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
@@ -30,10 +42,6 @@ test.set_window(start="2013-01-02", end="2013-01-03")
 # train.set_window(start="2024-08-01", end="2024-08-16")
 # test.set_window(start="2024-08-16", end="2024-09-01")
 
-building = dataset.buildings[1]  # Replace 1 with the building number
-
-# for appliance in train.buildings[1].elec.appliances:
-#     print(appliance)
 
 # dataset.buildings[1].elec.draw_wiring_graph()
 
@@ -45,12 +53,12 @@ train_elec = train.buildings[1].elec.submeters()
 all_meters = [train.buildings[1].elec.mains(), train.buildings[1].elec.submeters()]
 draw_plot(all_meters, "main & submeters")
 
-train_main = [train.buildings[1].elec.mains().power_series_all_data()]  # list of dataframes
-
+# Main train and test
 train_df = train.buildings[1].elec.mains().power_series_all_data().to_frame() # power_series_all_data() -> series.Series  ,   to_frame() -> frame.DataFrame
 train_main = [train_df]
 test_df = test.buildings[1].elec.mains().power_series_all_data().to_frame()
 test_main = [test_df]
+
 
 
 
@@ -98,96 +106,44 @@ mean.partial_fit(train_main=train_main, train_appliances=train_appliances)
 mean_prediction_list = mean.disaggregate_chunk(test_main)
 draw_plot(mean_prediction_list)
 
-# Auswertung
-# ground_truth = test.buildings[1].elec
-# fhmm_dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/fhmm.h5")
-# co_dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/co.h5")
-# # mle_dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/mle.h5")
-# fhmm_predictions = fhmm_dataset.buildings[1].elec
-# co_predictions = co_dataset.buildings[1].elec
-# mle_predictions = mle_dataset.buildings[1].elec
+# müssen metergroups sein oder so
+# f1_fhmm = f1_score(fhmm_prediction_list[0], test_main)
+# f1_co = f1_score(co_prediction_list[0], test_main)
+# f1_mean = f1_score(mean_prediction_list[0], test_main)
 
-# print("FHMM f1-score:")
-# print(f1_score(ground_truth=ground_truth, predictions=fhmm_predictions))
-# print("CO f1-score:")
-# print(f1_score(ground_truth=ground_truth, predictions=co_predictions))
-# print("MLE f1-score:")
-# print(f1_score(ground_truth=ground_truth, predictions=mle_predictions))
-# print("FHMM RMSE:")
-# print("CO RMSE:")
+# print(f"F1 FHMM: {f1_fhmm}")
+# print(f"F1 CO: {f1_co}")
+# print(f"F1 Mean: {f1_mean}")
 
-# draw_plot(fhmm_predictions, "FHMM Meters")
-# draw_plot(co_predictions, "CO Meters")
-# draw_plot(mle_predictions, "Mean Meters")
-# draw_plot(ground_truth, "Ground Truth")
-
-# meter_info = [
-#     {"index": meter.identifier.instance, "type": meter.appliances[0].type if meter.appliances else "unkown"}
-#     for meter in top_5_train_elec.meters
-# ]
-# indices = [meter.identifier.instance for meter in top_5_train_elec.meters]
-
-
+# create list of all meters in test dataset
 test_dataframe_list = []
 for meter in test.buildings[1].elec.submeters().meters:
     df = meter.power_series_all_data().to_frame()
+    appliance_type = meter.label()
+    df.columns = [appliance_type]
     test_dataframe_list.append(df)
 
-print(test_dataframe_list)
-print(top_10_instances)
-print(train.buildings[1].elec)
-print(fhmm_prediction_list)
-
-print(top_10_instances)
-for i in top_10_instances:
-    print(i)
-
-for fhmm, gt in zip(fhmm_prediction_list[0], top_10_instances):
+for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_10_instances):
+    index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
-    fhmm_df.index = pd.date_range(start='2013-01-02 00:00:00', end='2013-01-02 23:59:00', freq='1T', tz='Europe/Berlin')
-    print(type(fhmm_df))
-    print(fhmm)
-    print(gt)
-    print(type(test_dataframe_list[gt]))
-    df_list = [fhmm_df, test_dataframe_list[gt]]
-    draw_plot(fhmm_df)
-    draw_plot(test_dataframe_list[gt])
+    co_df = co_prediction_list[0][co].to_frame()
+    mean_df = mean_prediction_list[0][mean].to_frame()
+    # fhmm_df.index = pd.date_range(start='2013-01-02 00:00:00', end='2013-01-02 23:59:00', freq='1T', tz='Europe/Berlin')
+    df_list = [fhmm_df, co_df, mean_df, test_dataframe_list[index]]
+    # draw_plot(fhmm_df)
+    # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)
 
-fehler
 
-for column in fhmm_prediction_list[0]:
-    print(type(column))
-    print(column)
-    print(type(fhmm_prediction_list[0][column]))
-    df = fhmm_prediction_list[0][column].to_frame()
-    draw_plot(df)
+print(type(fhmm_prediction_list[0]))
+print()
+print(type(fhmm_prediction_list[0]["heat pump"]))
 
-for i in top_10_instances:
-    # print("index: ", i)
-    # print("fhmm: ", fhmm_prediction_list)
-    # print("gt: ", test_dataframe_list)
-    gt_submeter = test_dataframe_list[i]
-    # fhmm_submeter = fhmm_prediction_list[i]
-    # co_submeter = co_prediction_list[i]
-    # mean_submeter = mean_prediction_list[i]
-    draw_plot(gt_submeter)
-    
-    # plot_this = [gt_submeter, fhmm_submeter, co_submeter, mean_submeter]
-    # draw_plot(plot_this, title="index")
+all_meters = fhmm_prediction_list[0].copy()
+draw_plot(all_meters)
+for fhmm in fhmm_prediction_list[0]:
+    df = fhmm_prediction_list[0][fhmm].to_frame()
+    # all_meters = all_meters.add(df, fill_value=0)
+    all_meters += df
 
-fehler
-top_5_in_test = []
-for i, index in enumerate(indices):
-    meter = ground_truth[index]
-    top_5_in_test.append(meter)
-draw_plot(top_5_in_test, "Top 5 train elecs in test dataset")
-
-for i, index in enumerate(indices):
-    device = ground_truth[index]
-    fhmm_device_predictions = fhmm_predictions[index]
-    co_device_predictions = co_predictions[index]
-    # mle_device_predictions = mle_predictions[index]
-    all_meters = [device, fhmm_device_predictions, co_device_predictions]   #   , mle_device_predictions
-    title = "Device " + str(index)
-    draw_plot(all_meters, title)
+draw_plot(all_meters, title="aggregate of all meters")
