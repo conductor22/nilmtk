@@ -8,9 +8,9 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-import nilmtk_contrib
 
-print(nilmtk_contrib.__version__)
+# import nilmtk_contrib
+# print(nilmtk_contrib.__version__)
 
 # Datensets erstellen
 dataset = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
@@ -139,11 +139,13 @@ print(type(fhmm_prediction_list[0]))
 print()
 print(type(fhmm_prediction_list[0]["heat pump"]))
 
-all_meters = fhmm_prediction_list[0].copy()
-draw_plot(all_meters)
-for fhmm in fhmm_prediction_list[0]:
+all_meters = fhmm_prediction_list[0]["heat pump"].to_frame().copy()
+all_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
+for i in fhmm_prediction_list[0]:
     df = fhmm_prediction_list[0][fhmm].to_frame()
+    df.columns = pd.MultiIndex.from_tuples([("power", "active")])
     # all_meters = all_meters.add(df, fill_value=0)
     all_meters += df
 
-draw_plot(all_meters, title="aggregate of all meters")
+list = [all_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
+draw_plot(list, title="aggregate of all meters")
