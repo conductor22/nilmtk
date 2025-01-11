@@ -12,10 +12,12 @@ def draw_plot(input_data, title="Title"):
     for i, item in enumerate(input_data):
         # print("head: ", item.head())
         # print("tail: ", item.tail())
+        if isinstance(item, nilmtk.elecmeter.ElecMeter):
+            item = item.power_series_all_data().to_frame()
         if isinstance(item, pd.DataFrame):
             for appliance in item.columns:
                 ax.plot(item.index, item[appliance], label=appliance)
-
+        
         # label geht für metergroup so nicht
         elif isinstance(item, nilmtk.elecmeter.ElecMeter):
             meter_name = f"Meter {item.instance()}"
@@ -23,7 +25,7 @@ def draw_plot(input_data, title="Title"):
             item.plot(ax=ax, plot_kwargs={'label': meter_name}) 
             # for meter_group in input_data:
             #     meter_group.plot(ax=ax)
-    
+        
         elif isinstance(item, nilmtk.metergroup.MeterGroup):
             item.plot(ax=ax)
 
@@ -72,3 +74,31 @@ def legend_picker(ax, lines):
     leg.set_draggable(True)
 
     return map_legend_to_ax
+
+
+'''
+def draw_plot(input_data, title="Title"):
+
+    fig, ax = plt.subplots()
+
+    if not isinstance(input_data, list):
+        input_data = [input_data]
+
+    for i, item in enumerate(input_data):
+        # print("head: ", item.head())
+        # print("tail: ", item.tail())
+        if isinstance(item, pd.DataFrame):
+            for appliance in item.columns:
+                ax.plot(item.index, item[appliance], label=appliance)
+        
+        # label geht für metergroup so nicht
+        elif isinstance(item, nilmtk.elecmeter.ElecMeter):
+            meter_name = f"Meter {item.instance()}"
+            # meter_name = "Meter " + str(item.instance())
+            item.plot(ax=ax, plot_kwargs={'label': meter_name}) 
+            # for meter_group in input_data:
+            #     meter_group.plot(ax=ax)
+        
+        elif isinstance(item, nilmtk.metergroup.MeterGroup):
+            item.plot(ax=ax)
+'''

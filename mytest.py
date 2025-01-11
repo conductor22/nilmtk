@@ -1,112 +1,47 @@
-from nilmtk import DataSet
-from nilmtk.dataset_converters import convert_refit
-
-# convert_refit("C:/Users/Megapoort/Desktop/nilmdata/refitcsv", "C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
-refit_ds = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
-
-from pprint import pprint
-'''
-pprint(vars(refit_ds))
-print("*************************")
-# print(refit_ds)
-# print("*************************")
-# for key, value in refit_ds.buildings.items():
-#     print(f"{key} : {value}")
-# print("*************************")
-# print(refit_ds.buildings[1].elec)
-pprint(refit_ds.buildings)
-print("*************************")
-pprint(refit_ds.metadata)
-print("*************************")
-print(vars(refit_ds.buildings[1]))
-print("*************************")
-pprint(refit_ds.buildings[1].elec)
-print("*************************")
-pprint(refit_ds.buildings[1].metadata)
-'''
-print(f"refit_ds.buildings[1].elec, {type(refit_ds.buildings[1].elec)}")
-pprint(refit_ds.buildings[1].elec)
-elec = refit_ds.buildings[1].elec
-print(f"refit_ds.buildings[1].elec[1], {type(refit_ds.buildings[1].elec[1])}")
-pprint(elec[1])
-print(f"refit_ds.buildings[1].elec[1].available_columns, type({refit_ds.buildings[1].elec[1].available_columns})")
-pprint(elec[1].available_columns())
-df = next(elec[1].load(ac_type="active", sample_period=60))
-print(df.head())
-
+from nilmtk import DataSet, TimeFrame, MeterGroup, HDFDataStore
 from matplotlib import rcParams
-import matplotlib.pyplot as plt
+from plotting import draw_plot
 import pandas as pd
-import nilmtk
-from nilmtk import DataSet, MeterGroup
-
-# import numpy as np
-# x=np.linspace(0,10,100)
-# y=np.sin(x)
-# plt.plot(x,y)
-# plt.show()
-
-df.index = pd.to_datetime(df.index)
-plt.figure(figsize=(10,6))
-plt.plot(df.index, df["power"], label="Active Power", color="b")
-plt.xlabel=("time")
-plt.ylabel("power (W)")
-plt.title("power over time")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# plt.style.use("ggplot")
-# rcParams["figure.figsize"] = (13,10)
-# print()
-# # print("nested metergroups")
-# # pprint(elec.nested_metergorups())
-# print()
-# print("mains")
-# mains = elec.mains()
-# pprint(mains)
-# print()
-# print("submeters")
-# pprint(elec.submeters())
-# print()
-# print("proportion of energy submetered")
-# elec.proportion_of_energy_submetered()
-# print()
-
-# print()
-# print("mains available ac types")
-# pprint(mains.available_ac_types("power"))
-# print()
-# print("submeters available ac types")
-# pprint(elec.submeters().available_ac_types("power"))
-# print()
-# print("load")
-# pprint(next(elec.load()))
-# print()
-# print("total energy in kWh")
-# pprint(elec.mains().total_enery())
-# print()
-# print("energy per meter in kWh")
-# pprint(elec.submeters().energy_per_meter())
 '''
-refit_ds.set_window(start="2021-01-01", end="2021-01-02")
-print()
-print("windowed")
-print()
-train_building = refit_ds.buildings[1]
-test_building = refit_ds.buildings[2]
-print("sets assigned")
-print()
-
-from nilmtk.disaggregate import Hart85
-disaggregator = Hart85()
-print("aggregator instantiated")
-print()
-disaggregator.train(train_building)
-print("train()")
-print()
-disaggregated_data = disaggregator.disaggregate(test_building)
-print("disaggregated")
-# ground_truth_data = test_building.elec
-# print(rmse(disaggregated_data, ground_truth_data))
+zur bewertung der disaggregation muss erstmal geschaut werden,
+ob die aggregierten verbräuche vor der disaggregation dem gesamtverbrauch entsprechen
 '''
+dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+# dataset.set_window(start="2024-08-01", end="2024-08-03")  # komischer Strich
+# dataset.set_window(start="2024-08-01", end="2024-08-02")  # kein Strich
+# dataset.set_window(start="2024-08-02", end="2024-08-03")  # kein Strich
+dataset.set_window(start="2024-08-02", end="2024-09-01")
+elec = dataset.buildings[1].elec
+mains = elec.mains()
+subs = elec.submeters()
+
+# WTFFFFFFFF
+mains_df = mains.power_series_all_data().to_frame()
+print(mains_df.head())
+data_generator = mains.load()
+first_chunk = next(data_generator)
+print(type(first_chunk))    # dataframe
+print(first_chunk.head())
+df_list = [mains_df, mains]
+draw_plot(df_list, title="df und mains")
+draw_plot(subs, title="subs")
+
+print(elec)
+
+df_list = []
+for meter in elec.meters:
+    df = meter.power_series_all_data().to_frame()
+    df_list.append(df)
+
+print(len(df_list))
+# meterclamps zusammenrechnen
+meter_1_to_12 = df_list[0].copy()
+meter_1_to_12[:] = 0
+for i in range(0, 12):
+    meter_1_to_12 += df_list[i]
+
+# "HH" ausrechnen - wiz01 - wiz02...07
+
+df_all = [meter_1_to_12, mains]
+
+draw_plot(df_all, title="meter_1_to_12, haushalt, wiz01")

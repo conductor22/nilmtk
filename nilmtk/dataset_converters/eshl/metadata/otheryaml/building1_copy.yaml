@@ -65,7 +65,37 @@ elec_meters:
     site_meter: true
     data_location: WIZ/Clamp01
     phase: 1
-    
+  14:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp02
+    phase: 1
+  15:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp03
+    phase: 1
+  16:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp04
+    phase: 1
+  17:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp05
+    phase: 1
+  18:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp06
+    phase: 1
+  19:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp07
+    phase: 1
+
 appliances: []
 # - type: irgendwas
 #   instance: 1
