@@ -27,6 +27,7 @@ def draw_plot(input_data, title="Title"):
             #     meter_group.plot(ax=ax)
         
         elif isinstance(item, nilmtk.metergroup.MeterGroup):
+            print("metergroup detected")
             item.plot(ax=ax)
 
 

@@ -53,6 +53,32 @@ train_elec = train.buildings[1].elec.submeters()
 all_meters = [train.buildings[1].elec.mains(), train.buildings[1].elec.submeters()]
 draw_plot(all_meters, "main & submeters")
 
+test_elec = test.buildings[1].elec.submeters()
+all_meters = [test.buildings[1].elec.mains(), test.buildings[1].elec.submeters()]
+print(all_meters)
+draw_plot(all_meters, "main & submeters")
+# aggregate = train.buildings[1].elec.submeters().power_series_all_data().to_frame()
+
+test_list = []
+for meter in test_elec.meters:
+    df = meter.power_series_all_data().to_frame()
+    test_list.append(df)
+test_list.append(test.buildings[1].elec.mains().power_series_all_data().to_frame())
+draw_plot(test_list, "test main & submeters")
+
+
+aggregate = test_elec.meters[0].power_series_all_data().to_frame()
+for meter in test_elec.meters:
+    if meter.instance() == "1":
+        print("skipped")
+        continue
+    print(meter.instance())
+    df = meter.power_series_all_data().to_frame()
+    df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+    aggregate += df
+whatever_list = [aggregate, test.buildings[1].elec.mains()]
+draw_plot(whatever_list, "aggregate")
+
 # Main train and test
 train_df = train.buildings[1].elec.mains().power_series_all_data().to_frame() # power_series_all_data() -> series.Series  ,   to_frame() -> frame.DataFrame
 train_main = [train_df]
@@ -135,18 +161,15 @@ for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], me
     # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)
 
-
-print(type(fhmm_prediction_list[0]))
-print()
-print(type(fhmm_prediction_list[0]["heat pump"]))
-
-all_meters = fhmm_prediction_list[0]["heat pump"].to_frame().copy()
-all_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
+all_prediction_meters = fhmm_prediction_list[0]["unkown"].to_frame().copy()
+all_prediction_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
 for i in fhmm_prediction_list[0]:
-    df = fhmm_prediction_list[0][fhmm].to_frame()
+    if i == "unkown":
+        continue
+    df = fhmm_prediction_list[0][i].to_frame()
     df.columns = pd.MultiIndex.from_tuples([("power", "active")])
-    # all_meters = all_meters.add(df, fill_value=0)
-    all_meters += df
+    # all_prediction_meters = all_prediction_meters.add(df, fill_value=0)
+    all_prediction_meters += df
 
-list = [all_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
+list = [all_prediction_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
 draw_plot(list, title="aggregate of all meters")

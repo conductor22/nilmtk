@@ -8,6 +8,7 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
+import myalgo
 
 # import nilmtk_contrib
 # print(nilmtk_contrib.__version__)
@@ -94,11 +95,14 @@ fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 draw_plot(fhmm_prediction_list)
 
-# CO disaggregation
-co = CO({})
-co.partial_fit(train_main=train_main, train_appliances=train_appliances)
-co_prediction_list = co.disaggregate_chunk(test_main)
-draw_plot(co_prediction_list)
+# KMEANS disaggregation
+kmeans_params = {'num_clusters': 10}
+kmeans = myalgo.KMeansDisaggregator(kmeans_params)
+kmeans.partial_fit(train_main)
+kmeans_prediction_list = kmeans.disaggregate_chunk(test_main)
+draw_plot(kmeans_prediction_list)
+
+
 
 # Mean disaggregation
 mean = Mean({})
@@ -123,13 +127,13 @@ for meter in test.buildings[1].elec.submeters().meters:
     df.columns = [appliance_type]
     test_dataframe_list.append(df)
 
-for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_10_instances):
+for fhmm, kmeans, mean, gt in zip(fhmm_prediction_list[0], kmeans_prediction_list[0], mean_prediction_list[0], top_10_instances):
     index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
-    co_df = co_prediction_list[0][co].to_frame()
+    kmeans_df = kmeans_prediction_list[0][kmeans].to_frame()
     mean_df = mean_prediction_list[0][mean].to_frame()
     # fhmm_df.index = pd.date_range(start='2013-01-02 00:00:00', end='2013-01-02 23:59:00', freq='1T', tz='Europe/Berlin')
-    df_list = [fhmm_df, co_df, mean_df, test_dataframe_list[index]]
+    df_list = [fhmm_df, kmeans_df, mean_df, test_dataframe_list[index]]
     # draw_plot(fhmm_df)
     # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)
@@ -142,10 +146,24 @@ print(type(fhmm_prediction_list[0]["heat pump"]))
 all_meters = fhmm_prediction_list[0]["heat pump"].to_frame().copy()
 all_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
 for i in fhmm_prediction_list[0]:
-    df = fhmm_prediction_list[0][fhmm].to_frame()
+    if i == "heat pump":
+        continue
+    df = fhmm_prediction_list[0][i].to_frame()
     df.columns = pd.MultiIndex.from_tuples([("power", "active")])
     # all_meters = all_meters.add(df, fill_value=0)
     all_meters += df
 
 list = [all_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
 draw_plot(list, title="aggregate of all meters")
+
+print(kmeans_prediction_list[0])
+kmeans_meters = kmeans_prediction_list[0]["Appliance_1"].to_frame().copy()
+kmeans_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
+for i in kmeans_prediction_list[0]:
+    if i == "Appliance_1":
+        continue
+    df = kmeans_prediction_list[0][i].to_frame()
+    df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+    kmeans_meters += df
+newlist = [kmeans_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
+draw_plot(newlist, title="aggregate of all meters")

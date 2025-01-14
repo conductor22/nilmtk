@@ -184,7 +184,7 @@ class FHMMExact(Disaggregator):
         """
         Train using 1d FHMM.
         """
-        print(".........................FHMM partial_fit.................")
+        print(".........................F_fitHMM partial.................")
 
         train_main = pd.concat(train_main, axis=0)
         train_app_tmp = []

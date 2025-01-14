@@ -10,7 +10,7 @@ dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
 # dataset.set_window(start="2024-08-01", end="2024-08-03")  # komischer Strich
 # dataset.set_window(start="2024-08-01", end="2024-08-02")  # kein Strich
 # dataset.set_window(start="2024-08-02", end="2024-08-03")  # kein Strich
-dataset.set_window(start="2024-08-02", end="2024-09-01")
+dataset.set_window(start="2024-08-02", end="2024-08-04")
 elec = dataset.buildings[1].elec
 mains = elec.mains()
 subs = elec.submeters()
