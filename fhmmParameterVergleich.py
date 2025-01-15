@@ -113,23 +113,23 @@ for i in top_10_instances:
 
 print(train_appliances)
 
-# FHMM disaggregation
-fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
+params = {'num_of_states': 2}
+fhmm = FHMMExact(params)
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 draw_plot(fhmm_prediction_list)
 
-# CO disaggregation
-co = CO({})
-co.partial_fit(train_main=train_main, train_appliances=train_appliances)
-co_prediction_list = co.disaggregate_chunk(test_main)
-draw_plot(co_prediction_list)
+params2 = {'num_of_states': 5}
+fhmm2 = FHMMExact(params2)
+fhmm2.partial_fit(train_main=train_main, train_appliances=train_appliances)
+fhmm2_prediction_list = fhmm2.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
+draw_plot(fhmm2_prediction_list)
 
-# Mean disaggregation
-mean = Mean({})
-mean.partial_fit(train_main=train_main, train_appliances=train_appliances)
-mean_prediction_list = mean.disaggregate_chunk(test_main)
-draw_plot(mean_prediction_list)
+params3 = {'num_of_states': 10}
+fhmm3 = FHMMExact(params3)
+fhmm3.partial_fit(train_main=train_main, train_appliances=train_appliances)
+fhmm3_prediction_list = fhmm3.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
+draw_plot(fhmm3_prediction_list)
 
 # müssen metergroups sein oder so
 # f1_fhmm = f1_score(fhmm_prediction_list[0], test_main)
@@ -148,13 +148,13 @@ for meter in test.buildings[1].elec.submeters().meters:
     df.columns = [appliance_type]
     test_dataframe_list.append(df)
 
-for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_10_instances):
+for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], fhmm2_prediction_list[0], fhmm3_prediction_list[0], top_10_instances):
     index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
-    co_df = co_prediction_list[0][co].to_frame()
-    mean_df = mean_prediction_list[0][mean].to_frame()
+    fhmm2_df = fhmm2_prediction_list[0][co].to_frame()
+    fhmm3_df = fhmm3_prediction_list[0][mean].to_frame()
     # fhmm_df.index = pd.date_range(start='2013-01-02 00:00:00', end='2013-01-02 23:59:00', freq='1T', tz='Europe/Berlin')
-    df_list = [fhmm_df, co_df, mean_df, test_dataframe_list[index]]
+    df_list = [fhmm_df, fhmm2_df, fhmm3_df, test_dataframe_list[index]]
     # draw_plot(fhmm_df)
     # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)

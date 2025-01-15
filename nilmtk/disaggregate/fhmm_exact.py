@@ -218,6 +218,7 @@ class FHMMExact(Disaggregator):
             self.X = X
 
             if self.num_of_states > 0:
+                 print("Number of states for '{}' is set to be {}".format(appliance, self.num_of_states))
                  # User has specified the number of states for this appliance
                  num_total_states = self.num_of_states
 
