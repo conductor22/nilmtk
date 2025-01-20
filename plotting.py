@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import nilmtk as nilmtk
 
-def draw_plot(input_data, title="Title"):
+def draw_plot(input_data, title="Title", invisible=False):
 
     fig, ax = plt.subplots()
 
@@ -27,16 +27,19 @@ def draw_plot(input_data, title="Title"):
             #     meter_group.plot(ax=ax)
         
         elif isinstance(item, nilmtk.metergroup.MeterGroup):
-            print("metergroup detected")
             item.plot(ax=ax)
 
 
     lines = ax.get_lines()
     ax.set_title(title)
-    legend_picker(ax, lines)
+    legend_picker(ax, lines, invisible)
     plt.show()
 
-def legend_picker(ax, lines):
+def legend_picker(ax, lines, invisible):
+
+    if invisible:
+        for line in lines:
+            line.set_visible(False)
 
     leg = ax.legend(fancybox=True, shadow=True)
 

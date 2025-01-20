@@ -276,36 +276,51 @@ class FHMMExact(Disaggregator):
         # Array of learnt states
 
         test_prediction_list = []
-
+        print("starting disaggregation")
         for test_mains in test_mains_list:
-            
+            print(len(test_mains_list))
+            print(test_mains)
             learnt_states_array = []
             if len(test_mains) == 0:
+                print("RIP")
                 tmp = pd.DataFrame(index = test_mains.index, columns = self.app_names)
                 test_prediction_list.append(tmp)
             else:
+                print("length found to be >0")
                 length = len(test_mains.index)
+                print("trying to reshape")
                 temp = test_mains.values.reshape(length, 1)
-                learnt_states_array.append(self.model.predict(temp))
+                print("reshaped")
+                print("***********")
+                print("Before prediction")
+                prediction = self.model.predict(temp)
+                print("Prediction successful:", prediction)
+                learnt_states_array.append(prediction)
 
+                print("hello")
                 # Model
                 means = OrderedDict()
+                print("before for loop over items")
                 for elec_meter, model in self.individual.items():
+                    print("for loop for elecmeters")
+                    print("elec_meter: ", elec_meter, " | model: ", model)
                     means[elec_meter] = (
                         model.means_.round().astype(int).flatten().tolist())
                     means[elec_meter].sort()
-
                 decoded_power_array = []
                 decoded_states_array = []
 
                 for learnt_states in learnt_states_array:
+                    print("for loop in learnt_states")
                     [decoded_states, decoded_power] = decode_hmm(
                         len(learnt_states), means, means.keys(), learnt_states)
                     decoded_states_array.append(decoded_states)
                     decoded_power_array.append(decoded_power)
-
+                print(len(decoded_power_array))
+                print(len(decoded_power_array[0]))
+                print(decoded_power_array[0])
                 appliance_powers = pd.DataFrame(decoded_power_array[0], dtype='float32')
                 appliance_powers.index = test_mains.index
                 test_prediction_list.append(appliance_powers)
-        
+        print("Finished disaggregation")
         return test_prediction_list

@@ -13,19 +13,19 @@ import pandas as pd
 # print(nilmtk_contrib.__version__)
 
 # Datensets erstellen
-dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
-train = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
-test = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
+train = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
+test = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
 
 df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
 
 # start_date = df.index[0].date()
-# end_date = df.index[-1].date()
+# end_date = df.index[-1].date()+
 # print(start_date)
 # print(end_date)
 
 start_date = pd.Timestamp("2024-08-02")
-end_date = pd.Timestamp("2024-08-04")
+end_date = pd.Timestamp("2024-08-03")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -87,7 +87,7 @@ test_main = [test_df]
 
 
 # find out top k meters
-top_10 = train.buildings[1].elec.submeters().select_top_k(k=10) # Metergroup
+top_10 = train.buildings[1].elec.submeters().select_top_k(k=7) # Metergroup
 
 top_10_list = []    # list of dataframes
 for meter in top_10.meters:
@@ -113,19 +113,69 @@ for i in top_10_instances:
 
 print(train_appliances)
 
-params = {'num_of_states': 2}
+
+import gc
+import time
+
+params = {'num_of_states': 3}
 fhmm = FHMMExact(params)
+
+def chunk_data(data, chunk_size):
+    """Split data into chunks of size chunk_size."""
+    for i in range(0, len(data), chunk_size):
+        yield data[i:i + chunk_size]
+
+chunk_size = 100000
+
+# Split the train_main and train_appliances into chunks
+train_main_chunks = list(chunk_data(train_main, chunk_size))
+train_appliances_chunks = list(chunk_data(train_appliances, chunk_size))
+
+# Iterate over each chunk and call partial_fit
+for train_main_chunk, train_appliances_chunk in zip(train_main_chunks, train_appliances_chunks):
+    fhmm.partial_fit(train_main=train_main_chunk, train_appliances=train_appliances_chunk)
+
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
-fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
+
+
+
+print("****************************")
+print("trying to disaggregate")
+print("****************************")
+start = time.time()
+
+chunk_size = 100000
+fhmm_prediction_list = []
+
+for start in range(0, len(test_main[0]), chunk_size):
+    print(len(test_main[0]))
+    end = start + chunk_size
+    test_main_chunk = test_main[0][start:end]
+    print(start, end)
+    chunk_prediction = fhmm.disaggregate_chunk([test_main_chunk])
+    fhmm_prediction_list.append(chunk_prediction[0])
+
+    gc.collect()
+fhmm_prediction_list = pd.concat(fhmm_prediction_list)
+fhmm_prediction_list = [fhmm_prediction_list]
+print("****************************")
+print("disaggregation done")
+print("****************************")
+end = time.time()
+total = end - start
+minutes = int(total/60)
+seconds = total%60
+print(f"Total time: {minutes}m{seconds:.0f}s")
+
 draw_plot(fhmm_prediction_list)
 
-params2 = {'num_of_states': 5}
+params2 = {'num_of_states': 2}
 fhmm2 = FHMMExact(params2)
 fhmm2.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm2_prediction_list = fhmm2.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 draw_plot(fhmm2_prediction_list)
 
-params3 = {'num_of_states': 10}
+params3 = {'num_of_states': 1}
 fhmm3 = FHMMExact(params3)
 fhmm3.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm3_prediction_list = fhmm3.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
