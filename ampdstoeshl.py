@@ -17,15 +17,10 @@ dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
 train = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
 test = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
 
-df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
 
-# start_date = df.index[0].date()
-# end_date = df.index[-1].date()
-# print(start_date)
-# print(end_date)
 
 start_date = pd.Timestamp("2024-08-02")
-end_date = pd.Timestamp("2024-08-04")
+end_date = pd.Timestamp("2024-08-30")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -34,56 +29,95 @@ dataset.set_window(start=start_date, end=end_date)
 train.set_window(start=start_date, end=train_test_split_point)
 test.set_window(start=train_test_split_point, end=end_date)
 
-# dataset = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
-# train = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
-# test = DataSet("E:/Users/Megapoort/eshldaten/oneetotwelve/eshl.h5")
+dataset.buildings[1].elec.mains().plot()
+plt.show()
+df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
+print(len(df))
+list = [dataset.buildings[1].elec.mains(), df]
+draw_plot(list, title="aaa")
 
-# dataset.set_window(start="2024-08-01", end="2024-09-01")
-# train.set_window(start="2024-08-01", end="2024-08-16")
-# test.set_window(start="2024-08-16", end="2024-09-01")
-
+pprint(dir(dataset.buildings[1].elec.mains()))
+df1 = test.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame(name='active power')
+df2 = test.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame(name='reactive power')
+df_list = [df1, df2]
+print("df_list: ", df_list)
+df_ges = pd.concat([df1, df2], axis=1)
+print("df_ges: ", df_ges)
+draw_plot(df_list)
+draw_plot(df_ges)
 
 # dataset.buildings[1].elec.draw_wiring_graph()
 
 # Training plots
 train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
-draw_plot(train_test_mains, "Trainset & Testset Mains")
+# draw_plot(train_test_mains, "Trainset & Testset Mains")
 
 train_elec = train.buildings[1].elec.submeters()
 all_meters = [train.buildings[1].elec.mains(), train.buildings[1].elec.submeters()]
-draw_plot(all_meters, "main & submeters")
+# draw_plot(all_meters, "main & submeters")
 
 test_elec = test.buildings[1].elec.submeters()
 all_meters = [test.buildings[1].elec.mains(), test.buildings[1].elec.submeters()]
 print(all_meters)
-draw_plot(all_meters, "main & submeters")
-# aggregate = train.buildings[1].elec.submeters().power_series_all_data().to_frame()
+# draw_plot(all_meters, "main & submeters")
 
 test_list = []
 for meter in test_elec.meters:
-    df = meter.power_series_all_data().to_frame()
+    df_active = meter.power_series_all_data(ac_type='active').to_frame()
+    df_reactive = meter.power_series_all_data(ac_type='reactive').to_frame()
+    df = pd.concat([df_active, df_reactive], axis=1)
     test_list.append(df)
-test_list.append(test.buildings[1].elec.mains().power_series_all_data().to_frame())
-draw_plot(test_list, "test main & submeters")
+# test_list.append(test.buildings[1].elec.mains().power_series_all_data().to_frame())
+# draw_plot(test_list, "test main & submeters")
 
 
-aggregate = test_elec.meters[0].power_series_all_data().to_frame()
+
+# aggregate = pd.DataFrame(columns=pd.MultiIndex.from_tuples([("power", "active"), ("power", "reactive")]))
+# aggregate.columns.set_names(["physical_quantity", "type"], inplace=True)
+# aggregate.index.name = 'Time'
+# print(aggregate)
+
+
+
+aggregate_active = test_elec.meters[0].power_series_all_data(ac_type='active').to_frame()
+aggregate_reactive = test_elec.meters[0].power_series_all_data(ac_type='reactive').to_frame()
+aggregate = pd.concat([aggregate_active, aggregate_reactive], axis=1)
+print("base aggregate instance: ", test_elec.meters[0].instance())
 for meter in test_elec.meters:
-    if meter.instance() == "1":
+    print(meter.instance())
+    if meter.instance() == 1:
         print("skipped")
         continue
-    print(meter.instance())
-    df = meter.power_series_all_data().to_frame()
-    df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+    print("not skipped")
+    df_active = meter.power_series_all_data(ac_type='active').to_frame()
+    df_reactive = meter.power_series_all_data(ac_type='reactive').to_frame()
+    df = pd.concat([df_active, df_reactive], axis=1)
+    df.columns = pd.MultiIndex.from_tuples([("power", "active"), ("power", "reactive")])
     aggregate += df
-whatever_list = [aggregate, test.buildings[1].elec.mains()]
+    draw_plot(aggregate)
+
+site_active = test.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+site_reactive = test.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+site_df = pd.concat([site_active, site_reactive], axis=1)
+whatever_list = [aggregate, site_df]
 draw_plot(whatever_list, "aggregate")
 
+
+
 # Main train and test
-train_df = train.buildings[1].elec.mains().power_series_all_data().to_frame()
-train_main = [train_df]
-test_df = test.buildings[1].elec.mains().power_series_all_data().to_frame()
-test_main = [test_df]
+train_active = train.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+train_reactive = train.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+train_df = pd.concat([train_active, train_reactive], axis=1)
+
+test_active = test.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+test_reactive = test.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+test_df = pd.concat([test_active, test_reactive], axis=1)
+
+def create_df(meter):
+    df_active_power = meter.power_series_all_data(ac_type='active').to_frame()
+    df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    return df
 
 
 # find out top k meters
