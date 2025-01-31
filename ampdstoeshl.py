@@ -114,7 +114,10 @@ for i in top_10_instances:
 print(train_appliances)
 
 # FHMM disaggregation
-fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
+params = {'num_of_states': 2}
+fhmm = FHMMExact(params)
+
+
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 draw_plot(fhmm_prediction_list)
@@ -147,7 +150,7 @@ for meter in test.buildings[1].elec.submeters().meters:
     appliance_type = meter.label()
     df.columns = [appliance_type]
     test_dataframe_list.append(df)
-
+'''
 for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_10_instances):
     index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
@@ -158,6 +161,16 @@ for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], me
     # draw_plot(fhmm_df)
     # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)
+'''
+
+for fhmm in fhmm_prediction_list[0]:
+    copy_list = fhmm_prediction_list[0]
+    fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
+    copy_list.append(fhmm_df)
+    # draw_plot(fhmm_df)
+    # draw_plot(test_dataframe_list[index])
+    draw_plot(copy_list)
+
 
 all_prediction_meters = fhmm_prediction_list[0]["unkown"].to_frame().copy()
 all_prediction_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
