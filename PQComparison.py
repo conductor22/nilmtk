@@ -8,26 +8,24 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-import numpy as np
-
-# import nilmtk_contrib
-# print(nilmtk_contrib.__version__)
 
 def create_df(meter):
-    df_active_power = meter.power_series_all_data(ac_type='active').to_frame()
-    df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
-    df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    df_active_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    # df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    # df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    df = df_active_power
     return df
 
-
 # Datensets erstellen
-dataset = DataSet("C:/Users/ieh-buergin/Desktop/csv/eshl.h5")
-train = DataSet("C:/Users/ieh-buergin/Desktop/csv/eshl.h5")
-test = DataSet("C:/Users/ieh-buergin/Desktop/csv/eshl.h5")
-# dataset.buildings[1].elec.draw_wiring_graph()
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/eshl/eshlQsum.h5")
+train = DataSet("C:/Users/ieh-buergin/Desktop/eshl/eshlQsum.h5")
+test = DataSet("C:/Users/ieh-buergin/Desktop/eshl/eshlQsum.h5")
+
+df = create_df(dataset.buildings[1].elec.mains())
 
 start_date = pd.Timestamp("2024-08-02")
-end_date = pd.Timestamp("2024-08-04")
+end_date = pd.Timestamp("2024-08-30")
+end_date = pd.Timestamp("2024-08-30")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -36,84 +34,108 @@ dataset.set_window(start=start_date, end=end_date)
 train.set_window(start=start_date, end=train_test_split_point)
 test.set_window(start=train_test_split_point, end=end_date)
 
-df_ges = create_df(test.buildings[1].elec.mains())
-print("df_ges: ", df_ges)
-draw_plot(df_ges)
-
+dataset_elecs = dataset.buildings[1].elec.submeters()
+# dataset.buildings[1].elec.draw_wiring_graph()
 
 # Training plots
 train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
 # draw_plot(train_test_mains, "Trainset & Testset Mains")
+# draw_plot(train_test_mains, "Trainset & Testset Mains")
 
 train_elec = train.buildings[1].elec.submeters()
-all_meters = [train.buildings[1].elec.mains(), train.buildings[1].elec.submeters()]
-# draw_plot(all_meters, "main & submeters")
+train_list = []
+for meter in train_elec.meters:
+    # df = meter.power_series_all_data().to_frame()
+    # test_list.append(df)
+    df = create_df(meter)
+    train_list.append(df)
+train_list.append(train.buildings[1].elec.mains())
+# draw_plot(train_list, "main & submeters")
 
 test_elec = test.buildings[1].elec.submeters()
-all_meters = [test.buildings[1].elec.mains(), test.buildings[1].elec.submeters()]
-print(all_meters)
-# draw_plot(all_meters, "main & submeters")
+# aggregate = train.buildings[1].elec.submeters().power_series_all_data().to_frame()
 
-test_meter_list = []
+test_list = []
 for meter in test_elec.meters:
+    # df = meter.power_series_all_data().to_frame()
+    # test_list.append(df)
     df = create_df(meter)
-    test_meter_list.append(df)
-# test_list.append(test.buildings[1].elec.mains().power_series_all_data().to_frame())
+    test_list.append(df)
+
+test_list.append(create_df(test.buildings[1].elec.mains()))
 # draw_plot(test_list, "test main & submeters")
 
 
-
-# aggregate = pd.DataFrame(columns=pd.MultiIndex.from_tuples([("power", "active"), ("power", "reactive")]))
-# aggregate.columns.set_names(["physical_quantity", "type"], inplace=True)
-# aggregate.index.name = 'Time'
-# print(aggregate)
-
-
-aggregate = create_df(test_elec.meters[0])
-print("base aggregate instance: ", test_elec.meters[0].instance())
-for meter in test_elec.meters:
-    print(meter.instance())
+# aggregate = test_elec.meters[0].power_series_all_data(ac_type='active').to_frame()
+aggregate = create_df(dataset_elecs.meters[0])
+for meter in dataset_elecs.meters:
+    print("meter instance:", meter.instance())
     if meter.instance() == 1:
         print("skipped")
         continue
-    print("not skipped")
     df = create_df(meter)
-    df.columns = pd.MultiIndex.from_tuples([("power", "active"), ("power", "reactive")])
+    df.columns = pd.MultiIndex.from_tuples([("power", "reactive")])
     aggregate += df
-    # draw_plot(aggregate)
 
-
-site_df = create_df(test.buildings[1].elec.mains())
-whatever_list = [aggregate, site_df]
+dataset_main_df = create_df(dataset.buildings[1].elec.mains())
+# whatever_list = [aggregate, test.buildings[1].elec.mains()]
+whatever_list = [dataset_main_df, aggregate]
+# whatever_list = [aggregate]
+# whatever_list.append(test.buildings[1].elec.mains().power_series_all_data().to_frame())
 draw_plot(whatever_list, "aggregate")
 
+difference = dataset_main_df - aggregate
+# total_difference = difference.cumsum()
+
+average_hour = difference.resample('H').mean()
+cum_average_hour = average_hour.cumsum()
+
+absolute_difference = difference.abs()
+cum_sum = absolute_difference.sum().sum()
+print(cum_sum)
+aaa = [difference, absolute_difference, cum_sum]
+draw_plot(aaa)
+
+new_list = [dataset_main_df, aggregate, difference, average_hour, cum_average_hour]
+draw_plot(new_list, title="difference")
 
 
+fehler
 # Main train and test
-train_main = [create_df(train.buildings[1].elec.mains())]
-test_main = [create_df(test.buildings[1].elec.mains())]
+train_active = train.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+train_reactive = train.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+train_df = pd.concat([train_active, train_reactive], axis=1)
+
+test_active = test.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+test_reactive = test.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+test_df = pd.concat([test_active, test_reactive], axis=1)
+
+def create_df(meter):
+    df_active_power = meter.power_series_all_data(ac_type='active').to_frame()
+    df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    return df
+
 
 # find out top k meters
-top_10 = train.buildings[1].elec.submeters().select_top_k(k=3) # Metergroup
+top_10 = train.buildings[1].elec.submeters().select_top_k(k=10) # Metergroup
 
 top_10_list = []    # list of dataframes
 for meter in top_10.meters:
-    df = create_df(meter)
+    df = meter.power_series_all_data().to_frame()
     top_10_list.append(df)
-
-# draw_plot(top_10_list, "top 10 meters")   funktioniert
 
 # get the indices
 top_10_instances = [meter.instance() for meter in top_10.meters]
-print()
-print(top_10_instances)
 
 train_appliances = []
+df_list = []
 for i in top_10_instances:
     appliance = train.buildings[1].elec[i]
     appliance_name = "unkown"
     appliance_df = create_df(appliance)
     appliance_data = [appliance_df]
+    df_list.append(appliance_df)
 
     existing_names = [name for name, _ in train_appliances]
     if appliance_name in existing_names:
@@ -122,12 +144,9 @@ for i in top_10_instances:
         
     train_appliances.append((appliance_name, appliance_data))
 
-print(train_appliances)
 
-train_appliances_df = [data[0] for _, data in train_appliances]
-print(train_appliances_df)
-draw_plot(train_appliances_df, title="train appliances")
-draw_plot(test_meter_list, title="test appliances")
+
+draw_plot(df_list)
 
 # FHMM disaggregation
 params = {'num_of_states': 2}
@@ -135,13 +154,7 @@ fhmm = FHMMExact(params)
 
 
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
-print("training done")
-
-draw_plot(train_appliances_df, title="train appliances")
-draw_plot(test_main, title="test main zum disaggregieren")
-
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
-print("disaggregation done")
 draw_plot(fhmm_prediction_list)
 
 # CO disaggregation
@@ -197,6 +210,7 @@ for fhmm in fhmm_prediction_list[0]:
 all_prediction_meters = fhmm_prediction_list[0]["unkown"].to_frame().copy()
 all_prediction_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])
 for i in fhmm_prediction_list[0]:
+    print("i: ", i)
     if i == "unkown":
         continue
     df = fhmm_prediction_list[0][i].to_frame()

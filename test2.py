@@ -3,7 +3,7 @@ from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
 
-dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/eshl/eshl.h5")
 dataset.set_window(start="2024-08-01", end="2024-08-02")
 elec = dataset.buildings[1].elec
 

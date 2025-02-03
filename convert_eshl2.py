@@ -15,7 +15,8 @@ def convert_eshl(input_path, output_filename, format="HDF"):
     # file.csv in Liste
     files.sort()
     datastore = get_datastore(output_filename, format, mode='w')    # HDFDataStore object
-    
+    wiz_list = []
+
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
         df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
@@ -38,19 +39,15 @@ def convert_eshl(input_path, output_filename, format="HDF"):
         print("Dataframe")
         print(df.head())
 
-        for col in df.columns:
-            print(f"Column: {col}")
-            key = get_key()
-            print(f"Key: {key}")
-            chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
-            chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
-            chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
+        print("csv path: ", csv_path)
+        if "WIZ" in csv_path:
+            print("found a wiz")
+            wiz_list.append(df)
+            continue
+        put_in_datastore(datastore, df)
+    
+    create_sitemeter(datastore, wiz_list)
 
-            print(f"DataFrame shape: {df.shape}")
-            print(chan_df.head())
-            print(f"Columns before storing in HDF5: {df.columns}")
-            sys.stdout.flush()
-            datastore.put(key, chan_df)
 
     print('Processing metadata...')
     metadata_path = os.path.join(get_module_directory(), 'dataset_converters', 'eshl', 'metadata')
@@ -70,7 +67,29 @@ def get_key():
     get_key.counter += 1
     return key
 
+def put_in_datastore(datastore, df):
+    for col in df.columns:
+            print(f"Column: {col}")
+            key = get_key()
+            print(f"Key: {key}")
+            chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
+            chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+            chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
+
+            print(f"DataFrame shape: {chan_df.shape}")
+            print(chan_df.head())
+            print(f"Columns before storing in HDF5: {chan_df.columns}")
+            sys.stdout.flush()
+            datastore.put(key, chan_df)
+
+        
+def create_sitemeter(datastore, wiz_list):
+    site_meter = wiz_list[0].copy()
+    for i in range(1, len(wiz_list)):
+        site_meter -= wiz_list[i]
+    put_in_datastore(datastore, site_meter)
+
 if __name__ == "__main__":
     input_path = "E:/Users/Megapoort/eshldaten/csv"
-    output_filename = "E:/Users/Megapoort/eshldaten/csv/eshl_old.h5"
+    output_filename = "E:/Users/Megapoort/eshldaten/csv/eshlPsum.h5"
     convert_eshl(input_path, output_filename)

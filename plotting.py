@@ -13,8 +13,11 @@ def draw_plot(input_data, title="Title", invisible=False):
         # print("head: ", item.head())
         # print("tail: ", item.tail())
         if isinstance(item, nilmtk.elecmeter.ElecMeter):
+            print("found elecmeter")
             item = item.power_series_all_data().to_frame()
+            print("length: ", len(item))
         if isinstance(item, pd.DataFrame):
+            print("found dataframe with length: ", len(item))
             for appliance in item.columns:
                 ax.plot(item.index, item[appliance], label=appliance)
         
@@ -27,12 +30,16 @@ def draw_plot(input_data, title="Title", invisible=False):
             #     meter_group.plot(ax=ax)
         
         elif isinstance(item, nilmtk.metergroup.MeterGroup):
-            item.plot(ax=ax)
+            print("metergroup detected")
+            for meter in item:
+                df = meter.power_series_all_data(ac_type='active').to_frame()
+                ax.plot(df.index, df)
+            # item.plot(ax=ax)
 
 
     lines = ax.get_lines()
-    ax.set_title(title)
-    legend_picker(ax, lines, invisible)
+    # ax.set_title(title)
+    legend_picker(ax, lines)
     plt.show()
 
 def legend_picker(ax, lines, invisible):
