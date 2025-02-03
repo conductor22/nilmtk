@@ -25,6 +25,7 @@ df = create_df(dataset.buildings[1].elec.mains())
 
 start_date = pd.Timestamp("2024-08-02")
 end_date = pd.Timestamp("2024-08-30")
+end_date = pd.Timestamp("2024-08-30")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -38,6 +39,7 @@ dataset_elecs = dataset.buildings[1].elec.submeters()
 
 # Training plots
 train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
+# draw_plot(train_test_mains, "Trainset & Testset Mains")
 # draw_plot(train_test_mains, "Trainset & Testset Mains")
 
 train_elec = train.buildings[1].elec.submeters()
@@ -100,12 +102,19 @@ draw_plot(new_list, title="difference")
 
 fehler
 # Main train and test
-train_df = train.buildings[1].elec.mains().power_series_all_data().to_frame() # power_series_all_data() -> series.Series  ,   to_frame() -> frame.DataFrame
-train_main = [train_df]
-test_df = test.buildings[1].elec.mains().power_series_all_data().to_frame()
-test_main = [test_df]
+train_active = train.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+train_reactive = train.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+train_df = pd.concat([train_active, train_reactive], axis=1)
 
+test_active = test.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
+test_reactive = test.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()
+test_df = pd.concat([test_active, test_reactive], axis=1)
 
+def create_df(meter):
+    df_active_power = meter.power_series_all_data(ac_type='active').to_frame()
+    df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    return df
 
 
 # find out top k meters
@@ -140,7 +149,10 @@ for i in top_10_instances:
 draw_plot(df_list)
 
 # FHMM disaggregation
-fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
+params = {'num_of_states': 2}
+fhmm = FHMMExact(params)
+
+
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 draw_plot(fhmm_prediction_list)
@@ -173,7 +185,7 @@ for meter in test.buildings[1].elec.submeters().meters:
     appliance_type = meter.label()
     df.columns = [appliance_type]
     test_dataframe_list.append(df)
-
+'''
 for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_10_instances):
     index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
@@ -184,6 +196,16 @@ for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], me
     # draw_plot(fhmm_df)
     # draw_plot(test_dataframe_list[index])
     draw_plot(df_list)
+'''
+
+for fhmm in fhmm_prediction_list[0]:
+    copy_list = fhmm_prediction_list[0]
+    fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
+    copy_list.append(fhmm_df)
+    # draw_plot(fhmm_df)
+    # draw_plot(test_dataframe_list[index])
+    draw_plot(copy_list)
+
 
 all_prediction_meters = fhmm_prediction_list[0]["unkown"].to_frame().copy()
 all_prediction_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])

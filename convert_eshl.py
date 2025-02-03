@@ -19,7 +19,7 @@ def convert_eshl(input_path, output_filename, format="HDF"):
 
     for i, file in enumerate(files):
         csv_path = os.path.join(input_path, files[i])
-        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3'], dayfirst=True)
+        df = pd.read_csv(csv_path, usecols=['Time', 'P1', 'P2', 'P3', 'Q1', 'Q2', 'Q3'], dayfirst=True)
         # df = pd.read_csv(csv_path, usecols=['Time', 'P1'], dayfirst=True)
         df.set_index('Time', inplace=True)
         df = df.sort_index()
@@ -35,6 +35,9 @@ def convert_eshl(input_path, output_filename, format="HDF"):
 
         df['P_total'] = df['P1'] + df['P2'] + df['P3']
         df.drop(columns=['P1', 'P2', 'P3'], inplace=True)
+
+        df['Q_total'] = df['Q1'] + df['Q2'] + df['Q3']
+        df.drop(columns=['Q1', 'Q2', 'Q3'], inplace=True)
         
         print("Dataframe")
         print(df.head())
@@ -67,21 +70,40 @@ def get_key():
     get_key.counter += 1
     return key
 
+# def put_in_datastore(datastore, df):
+#     for col in df.columns:
+#             print(f"Column: {col}")
+#             key = get_key()
+#             print(f"Key: {key}")
+#             chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
+#             chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
+#             chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
+
+#             print(f"DataFrame shape: {df.shape}")
+#             print(chan_df.head())
+#             print(f"Columns before storing in HDF5: {df.columns}")
+#             sys.stdout.flush()
+#             datastore.put(key, chan_df)
+            
+
 def put_in_datastore(datastore, df):
-    for col in df.columns:
-            print(f"Column: {col}")
-            key = get_key()
-            print(f"Key: {key}")
-            chan_df = df[[col]].copy()    # = pd.DataFrame(df[col])
-            chan_df.columns = pd.MultiIndex.from_tuples([("power", "active")])
-            chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
+    key = get_key()
+    print(f"Columns: {df.columns}")
+    print(f"Key: {key}")
 
-            print(f"DataFrame shape: {df.shape}")
-            print(chan_df.head())
-            print(f"Columns before storing in HDF5: {df.columns}")
-            sys.stdout.flush()
-            datastore.put(key, chan_df)
+    if 'P_total' in df.columns and 'Q_total' in df.columns:
+        chan_df = df[['P_total', 'Q_total']].copy()
+        chan_df.columns = pd.MultiIndex.from_tuples([("power", "active"), ("power", "reactive")])
+    else:
+        raise ValueError("Couldn't find P_total and Q_total power columns")
 
+    chan_df.columns.set_names(["physical_quantity", "type"], inplace=True)
+
+    print(f"DataFrame shape: {chan_df.shape}")
+    print(chan_df.head())
+    print(f"Columns before storing in HDF5: {chan_df.columns}")
+    sys.stdout.flush()
+    datastore.put(key, chan_df)
         
 def create_sitemeter(datastore, wiz_list):
     site_meter = wiz_list[0].copy()
