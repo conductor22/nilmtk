@@ -14,9 +14,9 @@ import myalgo
 # print(nilmtk_contrib.__version__)
 
 # Datensets erstellen
-dataset = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
-train = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
-test = DataSet("E:/Users/Megapoort/nilmdata/ampds/AMPds2.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/ampds/AMPds2.h5")
+train = DataSet("C:/Users/ieh-buergin/Desktop/ampds/AMPds2.h5")
+test = DataSet("C:/Users/ieh-buergin/Desktop/ampds/AMPds2.h5")
 
 df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
 
@@ -90,10 +90,10 @@ for i in top_10_instances:
 print(train_appliances)
 
 # FHMM disaggregation
-fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
-fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
-fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
-draw_plot(fhmm_prediction_list)
+# fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
+# fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
+# fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
+# draw_plot(fhmm_prediction_list)
 
 # KMEANS disaggregation
 kmeans_params = {'num_clusters': 10}
@@ -126,7 +126,7 @@ for meter in test.buildings[1].elec.submeters().meters:
     appliance_type = meter.label()
     df.columns = [appliance_type]
     test_dataframe_list.append(df)
-
+'''
 for fhmm, kmeans, mean, gt in zip(fhmm_prediction_list[0], kmeans_prediction_list[0], mean_prediction_list[0], top_10_instances):
     index = gt - 2  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
@@ -155,7 +155,7 @@ for i in fhmm_prediction_list[0]:
 
 list = [all_meters, test.buildings[1].elec.mains().power_series_all_data().to_frame()]
 draw_plot(list, title="aggregate of all meters")
-
+'''
 print(kmeans_prediction_list[0])
 kmeans_meters = kmeans_prediction_list[0]["Appliance_1"].to_frame().copy()
 kmeans_meters.columns = pd.MultiIndex.from_tuples([("power", "active")])

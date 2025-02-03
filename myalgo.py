@@ -8,7 +8,7 @@ class KMeansDisaggregator(Disaggregator):
     def __init__(self, params):
         self.model = {}
         self.MODEL_NAME = 'KMeans'
-        self.num_clusters = params.get('num_clusters', 10)
+        self.num_clusters = params.get('num_clusters', 2)
         self.app_names = []
 
     def partial_fit(self, train_main, **load_kwargs):

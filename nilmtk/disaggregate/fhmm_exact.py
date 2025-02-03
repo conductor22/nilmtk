@@ -218,15 +218,21 @@ class FHMMExact(Disaggregator):
             self.X = X
 
             if self.num_of_states > 0:
-                 # User has specified the number of states for this appliance
-                 num_total_states = self.num_of_states
+                # User has specified the number of states for this appliance
+                print("name: ", appliance)
+                if appliance in ("unkown_2", "unkown_5", "unkown_9"):
+                    print("found 2, 5 or 9")
+                    # num_total_states = 3
+                    num_total_states = self.num_of_states
+                else:
+                    num_total_states = self.num_of_states
 
             else:
                  # Find the optimum number of states
                 states = cluster(meter_data, max_num_clusters)
                 num_total_states = len(states)
 
-            print("Training model for submeter '{}'".format(appliance))
+            print("Training model for submeter '{}'".format(appliance), f"with {num_total_states} states")
             learnt_model[appliance] = hmm.GaussianHMM(num_total_states, "full")
 
             # Fit
@@ -247,9 +253,13 @@ class FHMMExact(Disaggregator):
                 
             new_learnt_models[meter] = hmm.GaussianHMM(startprob.size, "full")
             new_learnt_models[meter].startprob_ = startprob
+            print("startprob: ", startprob)
             new_learnt_models[meter].transmat_ = transmat
+            print("transmat: ", transmat)
             new_learnt_models[meter].means_ = means
+            print("means: ", means)
             new_learnt_models[meter].covars_ = covars
+            print("covars: ", covars)
             # UGLY! But works.
             self.meters.append(meter)
 

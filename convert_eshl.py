@@ -90,6 +90,6 @@ def create_sitemeter(datastore, wiz_list):
     put_in_datastore(datastore, site_meter)
 
 if __name__ == "__main__":
-    input_path = "E:/Users/Megapoort/eshldaten/csv"
-    output_filename = "E:/Users/Megapoort/eshldaten/csv/eshl.h5"
+    input_path = "C:/Users/ieh-buergin/Desktop/eshl"
+    output_filename = "C:/Users/ieh-buergin/Desktop/eshl/eshl.h5"
     convert_eshl(input_path, output_filename)

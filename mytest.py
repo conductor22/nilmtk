@@ -6,11 +6,11 @@ import pandas as pd
 zur bewertung der disaggregation muss erstmal geschaut werden,
 ob die aggregierten verbräuche vor der disaggregation dem gesamtverbrauch entsprechen
 '''
-dataset = DataSet("E:/Users/Megapoort/eshldaten/csv/eshl.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/eshl/eshl.h5")
 # dataset.set_window(start="2024-08-01", end="2024-08-03")  # komischer Strich
 # dataset.set_window(start="2024-08-01", end="2024-08-02")  # kein Strich
 # dataset.set_window(start="2024-08-02", end="2024-08-03")  # kein Strich
-dataset.set_window(start="2024-08-02", end="2024-08-04")
+dataset.set_window(start="2024-08-02", end="2024-09-01")
 elec = dataset.buildings[1].elec
 mains = elec.mains()
 subs = elec.submeters()

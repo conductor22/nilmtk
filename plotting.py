@@ -13,7 +13,7 @@ def draw_plot(input_data, title="Title"):
         # print("head: ", item.head())
         # print("tail: ", item.tail())
         if isinstance(item, nilmtk.elecmeter.ElecMeter):
-            item = item.power_series_all_data().to_frame()
+            item = item.power_series_all_data(ac_type='active').to_frame()
         if isinstance(item, pd.DataFrame):
             for appliance in item.columns:
                 ax.plot(item.index, item[appliance], label=appliance)
@@ -28,7 +28,10 @@ def draw_plot(input_data, title="Title"):
         
         elif isinstance(item, nilmtk.metergroup.MeterGroup):
             print("metergroup detected")
-            item.plot(ax=ax)
+            for meter in item:
+                df = meter.power_series_all_data(ac_type='active').to_frame()
+                ax.plot(df.index, df)
+            # item.plot(ax=ax)
 
 
     lines = ax.get_lines()
