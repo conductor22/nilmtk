@@ -40,6 +40,7 @@ class KMeansDisaggregator(Disaggregator):
     def disaggregate_chunk(self, test_mains_list):
         """
         Disaggregate the test data according to the model learnt previously.
+        Various implementations tested
         """
         # number of clusters just determines the energy levels
         # for test_main in test_mains_list:

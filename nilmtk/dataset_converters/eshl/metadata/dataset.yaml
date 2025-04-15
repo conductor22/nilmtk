@@ -1,11 +1,3 @@
 name: eshl
-timezone: Europe/Berlin
-# meter_devices:
-#   generic:
-#     model: Generic Meter
-#     sample_period: 1
-#     measurements:
-#       - physical_quantity: power
-#         type: active
-#       - physical_quantity: power
-#         type: reactive
+timezone: Europe/Berlin # wichtig, sonst geht gar nichts
+# Hier könnte man noch mehr schreiben, aber kein Bock, da eh nicht öffentlich

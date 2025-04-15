@@ -1,0 +1,105 @@
+instance: 1
+elec_meters:
+  1:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp01
+    phase: 2
+  2:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp02
+    phase: 2
+  3:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp03
+    phase: 2
+  4:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp04
+    phase: 2
+  5:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp05
+    phase: 2
+  6:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp06
+    phase: 2
+  7:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp07
+    phase: 2
+  8:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp08
+    phase: 2
+  9:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp09
+    phase: 2
+  10:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp10
+    phase: 2
+  11:
+    device_model: METER
+    submeter_of: 12
+    data_location: METER/Clamp11
+    phase: 2
+  # 12:               # This meter has no appliances
+  #   device_model: METER
+  #   submeter_of: 12
+  #   data_location: METER/Clamp12
+  #   phase: 2
+  12:
+    device_model: WIZ
+    site_meter: true
+    data_location: WIZ/Clamp01
+    phase: 2
+    
+appliances:
+- type: sockets
+  instance: 1
+  meters: [1]
+- type: sockets
+  instance: 2
+  meters: [2]
+- type: sockets
+  instance: 3
+  meters: [3]
+- type: dish washer
+  instance: 1
+  meters: [4]
+- type: fridge
+  instance: 1
+  meters: [5]
+- type: freezer
+  instance: 1
+  meters: [6]
+- type: coffee maker
+  instance: 1
+  meters: [7]
+- type: sockets
+  instance: 4
+  meters: [8]
+- type: stove
+  instance: 1
+  meters: [9]
+- type: air conditioner
+  instance: 1
+  meters: [10]
+- type: light
+  instance: 1
+  meters: [11]
+# - type: light
+#   instance: 2
+#   meters: [12]

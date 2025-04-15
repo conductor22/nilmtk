@@ -65,46 +65,41 @@ elec_meters:
     site_meter: true
     data_location: WIZ/Clamp01
     phase: 1
-  14:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp02
-    phase: 1
-  15:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp03
-    phase: 1
-  16:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp04
-    phase: 1
-  17:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp05
-    phase: 1
-  18:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp06
-    phase: 1
-  19:
-    device_model: WIZ
-    site_meter: true
-    data_location: WIZ/Clamp07
-    phase: 1
-
-appliances: []
-# - type: irgendwas
-#   instance: 1
-#   meters: [1]
-# - type: nochwas
-#   instance: 1
-#   meters: [2]
-
-# - original_name: fridge
-#   type: fridge
-#   instance: 1
-#   meters: [1]
+    
+appliances:
+- type: sockets
+  instance: 1
+  meters: [1]
+- type: sockets
+  instance: 2
+  meters: [2]
+- type: sockets
+  instance: 3
+  meters: [3]
+- type: tumble dryer
+  instance: 1
+  meters: [4]
+- type: sockets
+  instance: 4
+  meters: [5]
+- type: sockets
+  instance: 5
+  meters: [6]
+- type: fan # extractor hood
+  instance: 1
+  meters: [7]
+- type: sockets
+  instance: 6
+  meters: [8]
+- type: stove
+  instance: 1
+  meters: [9]
+- type: sockets
+  instance: 7
+  meters: [10]
+- type: light
+  instance: 1
+  meters: [11]
+- type: light
+  instance: 2
+  meters: [12]

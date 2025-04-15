@@ -8,8 +8,8 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-import mykmeans
-import myagglomerative
+import KMeans_Clustering as mykmeans
+import Agglomerative_Clustering
 
 def create_df(meter):
     df_active_power = meter.power_series_all_data(ac_type='active').to_frame()

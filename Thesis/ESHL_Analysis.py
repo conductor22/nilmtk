@@ -19,9 +19,9 @@ def create_df(meter):
  
 
 # Datensets erstellen
-dataset = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshl.h5") # ist nur p1
-train = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshl.h5")
-test = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshl.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlP1.h5") # ist nur p1
+train = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlP1.h5")
+test = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlP1.h5")
 
 start_date = pd.Timestamp("2024-08-02")
 end_date = pd.Timestamp("2024-08-31")

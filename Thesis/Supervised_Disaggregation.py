@@ -25,7 +25,7 @@ train = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlP2.h5")
 test = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlP2.h5")
 
 start_date = pd.Timestamp("2024-08-02")
-end_date = pd.Timestamp("2024-08-09")
+end_date = pd.Timestamp("2024-08-03")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -55,15 +55,6 @@ corr_list = [main_train_df, first]
 # Training plots
 # train_test_mains = [create_df(train.buildings[1].elec.mains()), create_df(test.buildings[1].elec.mains())]
 # draw_plot(train_test_mains, title="Trainset & Testset Mains")
-
-# dataset_top_8 = dataset.buildings[1].elec.submeters().select_top_k(k=8)
-# dataset_subs = []
-# for meter in dataset_top_8.meters:
-#     meter_df = create_df(meter)
-#     corrected = meter_df.where(meter_df >= 0).fillna(method='ffill')
-#     dataset_subs.append(corrected)
-# draw_plot(dataset_subs, title="Dataset Top 8 Submeters", metergroup=dataset_top_8)
-
 
 total_sum = 0
 dataset_df_list = []
@@ -126,7 +117,7 @@ draw_plot(test_list, title="Sum of Submeters & Site Meter Testset")
 
 
 
-
+# stacked plots sind scheiße
 # draw_stackedplot(train_list, title="Aggregated Meters")
 # a_list = [main_df]
 # a_list.extend(train_list)
@@ -236,8 +227,6 @@ draw_plot(gt_list, "Ground Truth")
 fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
 fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
-print("fhmm_prediction_list type: ", type(fhmm_prediction_list))
-print("fhmm_prediction_list[0] type: ", type(fhmm_prediction_list[0]))
 draw_plot(fhmm_prediction_list, title="FHMM Disaggregation", metergroup=train.buildings[1].elec, lim="FHMM", top_k=top_k_instances)
 
 # CO disaggregation
@@ -273,8 +262,6 @@ print("fhmm f1_score:")
 print(mymetrics.f1_score(fhmm_predictions, gt_dict))
 print("co f1_score:")
 print(mymetrics.f1_score(co_predictions, gt_dict))
-print("mean f1_score:")
-# print(mymetrics.f1_score(mean_predictions, gt_dict))
 print("**************************************************************************************")
 print("fhmm nmae_normalized_error_power:")
 print(mymetrics.normalized_mean_absolute_error_power(fhmm_predictions, gt_dict))

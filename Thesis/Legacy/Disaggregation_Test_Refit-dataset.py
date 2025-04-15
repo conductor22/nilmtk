@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from pprint import pprint
 
+# refit data set ist aus dem internet
 dataset = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")
 
 train = DataSet("C:/Users/Megapoort/Desktop/nilmdata/refith5/refit.h5")

@@ -8,8 +8,8 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-import mykmeans
-import myagglomerative
+import KMeans_Clustering as mykmeans
+import Agglomerative_Clustering as myagglomerative
 
 # import nilmtk_contrib
 # print(nilmtk_contrib.__version__)

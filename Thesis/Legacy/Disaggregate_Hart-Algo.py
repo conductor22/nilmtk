@@ -12,6 +12,7 @@ from pprint import pprint
 
 rcParams['figure.figsize'] = (13, 6)
 
+# AMPds data set ist aus dem Internet
 data = DataSet("C:/Users/Megapoort/Desktop/nilmdata/ampds/AMPds2.h5")
 print("Loaded", len(data.buildings), "buildings")
 
