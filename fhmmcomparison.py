@@ -84,8 +84,6 @@ print()
 print("Percentage of Energy Submetered: ", total_sum / create_df(dataset.buildings[1].elec.mains()).sum().sum() * 100)
 draw_plot(dataset_df_list_corrected, title="Dataset Submeters", metergroup=dataset.buildings[1].elec)
 
-
-
 comparison_list = [sum_of_submeters, dataset_df_corrected]
 draw_plot(comparison_list, title="Sum of Submeters & Site Meter")
 
@@ -164,7 +162,7 @@ for meter in test.buildings[1].elec.submeters().meters:
 
 # find out top k meters
 train_not_top_k = train.buildings[1].elec.submeters().select_top_k(k=12)
-train_top_k = train.buildings[1].elec.submeters().select_top_k(k=8)
+train_top_k = train.buildings[1].elec.submeters().select_top_k(k=6)
 
 remaining_meters = [meter for meter in train.buildings[1].elec.submeters().meters if meter not in train_top_k.meters]
 
@@ -234,7 +232,8 @@ draw_plot(gt_list, "Ground Truth")
 
 # FHMM disaggregation
 fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
-fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
+fhmm_kwargs = {'max_states': 2}
+fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances, **fhmm_kwargs)
 fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
 print("fhmm_prediction_list type: ", type(fhmm_prediction_list))
 print("fhmm_prediction_list[0] type: ", type(fhmm_prediction_list[0]))
@@ -247,10 +246,11 @@ co_prediction_list = co.disaggregate_chunk(test_main)
 draw_plot(co_prediction_list, title="CO Disaggregation", metergroup=train.buildings[1].elec, lim="CO", top_k=top_k_instances)
 
 # Mean disaggregation
-mean = Mean({})
-mean.partial_fit(train_main=train_main, train_appliances=train_appliances)
-mean_prediction_list = mean.disaggregate_chunk(test_main)
-# draw_plot(mean_prediction_list)
+fhmm2 = FHMMExact({})
+fhmm2_kwargs = {'max_states': 3}
+fhmm2.partial_fit(train_main=train_main, train_appliances=train_appliances, **fhmm2_kwargs)
+fhmm2_prediction_list = fhmm2.disaggregate_chunk(test_main)
+draw_plot(fhmm2_prediction_list, title="FHMM-Ext Disaggregation, max_states=3", metergroup=train.buildings[1].elec, top_k=top_k_instances)
 
 
 
@@ -264,6 +264,8 @@ fhmm_df = fhmm_prediction_list[0]
 fhmm_predictions = [fhmm_df[[col]] for col in fhmm_df.columns]
 co_df = co_prediction_list[0]
 co_predictions = [co_df[[col]] for col in co_df.columns]
+fhmm2_df = fhmm2_prediction_list[0]
+fhmm2_predictions = [fhmm2_df[[col]] for col in fhmm2_df.columns]
 # mean_df = mean_prediction_list[0]
 # mean_predictions = [mean_df[[col]] for col in mean_df.columns]
 ''' predictions in order of highest to lowest power
@@ -273,44 +275,53 @@ print("fhmm f1_score:")
 print(mymetrics.f1_score(fhmm_predictions, gt_dict))
 print("co f1_score:")
 print(mymetrics.f1_score(co_predictions, gt_dict))
-print("mean f1_score:")
-# print(mymetrics.f1_score(mean_predictions, gt_dict))
+print("fhmm2 f1_score:")
+print(mymetrics.f1_score(fhmm2_predictions, gt_dict))
 print("**************************************************************************************")
 print("fhmm nmae_normalized_error_power:")
 print(mymetrics.normalized_mean_absolute_error_power(fhmm_predictions, gt_dict))
 print("co nmae_normalized_error_power:")
 print(mymetrics.normalized_mean_absolute_error_power(co_predictions, gt_dict))
+print("fhmm2 nmae_normalized_error_power:")
+print(mymetrics.normalized_mean_absolute_error_power(fhmm2_predictions, gt_dict))
 print("**************************************************************************************")
 print("fhmm mean_absolute_error_power:")
 print(mymetrics.mean_absolute_error_power(fhmm_predictions, gt_dict))
 print("co mean_absolute_error_power:")
 print(mymetrics.mean_absolute_error_power(co_predictions, gt_dict))
+print("fhmm2 mean_absolute_error_power:")
+print(mymetrics.mean_absolute_error_power(fhmm2_predictions, gt_dict))
 print("**************************************************************************************")
 print("fhmm rms_error_power:")
 print(mymetrics.rms_error_power(fhmm_predictions, gt_dict))
 print("co rms_error_power:")
 print(mymetrics.rms_error_power(co_predictions, gt_dict))
+print("fhmm2 rms_error_power:")
+print(mymetrics.rms_error_power(fhmm2_predictions, gt_dict))
 print("**************************************************************************************")
 
 
 fhmm_list = []
 co_list = []
 gt_list = []
-for fhmm, co, mean, gt in zip(fhmm_prediction_list[0], co_prediction_list[0], mean_prediction_list[0], top_k_instances):
+fhmm2_list = []
+for fhmm, co, gt, fhmm2 in zip(fhmm_prediction_list[0], co_prediction_list[0], top_k_instances, fhmm2_prediction_list[0]):
     # in order of highest to lowest power (natural order of fhmm_prediction_list and top_10_instances)
     index = gt - 1  # the first index of gt is 0 but i want to compare to the instance number and not the index - the indices go from 2 to 21
     fhmm_df = fhmm_prediction_list[0][fhmm].to_frame()
     co_df = co_prediction_list[0][co].to_frame()
-    # mean_df = mean_prediction_list[0][mean].to_frame()
+    fhmm2_df = fhmm2_prediction_list[0][fhmm2].to_frame()
     fhmm_list.append(fhmm_df)
     co_list.append(co_df)
     gt_list.append(test_dataframe_list[index])
+    fhmm2_list.append(fhmm2_df)
     # fhmm_df.index = pd.date_range(start='2013-01-02 00:00:00', end='2013-01-02 23:59:00', freq='1T', tz='Europe/Berlin')
     # df_list = [fhmm_df, co_df, mean_df, test_dataframe_list[index]]
-    df_list = [fhmm_df, co_df, test_dataframe_list[index]]
+    df_list = [fhmm_df, co_df, test_dataframe_list[index], fhmm2_df]
 
     fhmm_df.rename(columns=lambda x: x.split('_')[0], inplace=True)
     co_df.rename(columns=lambda x: x.split('_')[0], inplace=True)
+    fhmm2_df.rename(columns=lambda x: x.split('_')[0], inplace=True)
 
     title = fhmm_df.columns[0]
     draw_plot2(df_list, title=title)
@@ -332,18 +343,24 @@ for i in co_prediction_list[0]:
     co_prediction_hom_indices.append(df)
 co_prediction_sum = sum(co_prediction_hom_indices)
 
-
+fhmm2_prediction_hom_indices = []
+for i in fhmm2_prediction_list[0]:
+    df = fhmm2_prediction_list[0][i].to_frame()
+    df.columns = pd.MultiIndex.from_tuples([("power", "reactive")])
+    fhmm2_prediction_hom_indices.append(df)
+fhmm2_prediction_sum = sum(fhmm2_prediction_hom_indices)
 
 # draw_plot([fhmm_prediction_sum], title="FHMM aggregated")
 # draw_plot([co_prediction_sum], title="CO aggregated")
 fhmm_prediction_sum.columns = ["FHMM"]
 co_prediction_sum.columns = ["CO"]
 test_corrected.columns = ["GT"]
+fhmm2_prediction_sum.columns = ["FHMM-Ext"]
 test_sum.columns = ["GT"]
 
 
-draw_plot([fhmm_prediction_sum, co_prediction_sum, test_corrected], title="Predictions & Site Meter")
-draw_plot([fhmm_prediction_sum, co_prediction_sum, test_sum], title="Predictions & aggregated GT")
+draw_plot([fhmm_prediction_sum, co_prediction_sum, test_corrected, fhmm2_prediction_sum], title="Predictions & Site Meter")
+draw_plot([fhmm_prediction_sum, co_prediction_sum, test_sum, fhmm2_prediction_sum], title="Predictions & aggregated GT")
 
 draw_plot([test_sum, test_corrected], title="Sum of Submeters & Site Meter")
 

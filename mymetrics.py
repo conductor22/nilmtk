@@ -54,28 +54,10 @@ def fraction_energy_assigned_correctly(predictions, ground_truth_dict):
                         predicted_energy / total_predicted_energy)
     return fraction
 
-def mean_normalized_error_power(predictions, ground_truth_dict):
-    '''Compute mean normalized error in assigned power
-        
-    .. math::
-        error^{(n)} = 
-        \\frac
-        { \\sum_t {\\left | y_t^{(n)} - \\hat{y}_t^{(n)} \\right |} }
-        { \\sum_t y_t^{(n)} }
+def normalized_mean_absolute_error_power(predictions, ground_truth_dict):
 
-    Parameters
-    ----------
-    predictions, ground_truth : list of pd.DataFrame
-        Each DataFrame corresponds to the predictions or ground truth for a meter.
-
-    Returns
-    -------
-    mne : pd.Series
-        Each index is an integer representing the meter instance.
-        Each value is the MNE for that appliance.
-    '''
     ground_truth = list(ground_truth_dict.values())
-    mne = []
+    nae = []
     for i, (pred_df, gt_df) in enumerate(zip(predictions, ground_truth)):
         total_abs_diff = 0.0
         sum_of_ground_truth_power = 0.0
@@ -86,9 +68,9 @@ def mean_normalized_error_power(predictions, ground_truth_dict):
         total_abs_diff += sum(abs(diff.dropna()))
         sum_of_ground_truth_power += aligned_df.iloc[:, 1].sum()
 
-        mne.append(total_abs_diff / sum_of_ground_truth_power)
+        nae.append(total_abs_diff / sum_of_ground_truth_power)
 
-    return mne
+    return nae
 
 def mean_absolute_error_power(predictions, ground_truth_dict):
 
@@ -141,8 +123,8 @@ def rms_error_power(predictions, ground_truth_dict):
         diff = pred_col - gt_col
         diff.dropna(inplace=True)
 
-        squared_diff = (diff ** 2).sum()
-        mean_squared_diff = squared_diff.mean()
+        squared_diff = (diff ** 2)
+        mean_squared_diff = squared_diff.sum() / len(diff)
         rmse = math.sqrt(mean_squared_diff)
 
         error.append(rmse)
@@ -174,21 +156,22 @@ def f1_score(predictions, ground_truth_dict):
     from sklearn.metrics import f1_score as sklearn_f1_score
     f1_scores = []
 
-    # ground_truth = list(ground_truth_dict.values())
-    # for i, (pred_df, gt_df) in enumerate(zip(predictions, ground_truth)):
-    #     scores_for_meter = pd.DataFrame(columns=['score', 'num_samples'])
-    #     aligned_df = pd.concat([pred_df, gt_df], axis=1, join='inner').dropna()
-    #     aligned_df = aligned_df.astype(int)
+    threshold = 5
 
+    ground_truth = list(ground_truth_dict.values())
+    for i, (pred_df, gt_df) in enumerate(zip(predictions, ground_truth)):
+        pred_df_binary = (pred_df > threshold).astype(int)
+        gt_df_binary = (gt_df > threshold).astype(int)
+        aligned_df = pd.concat([pred_df_binary, gt_df_binary], axis=1, join='inner').dropna()
         
-    #     # aligned_df = aligned_df.astype(int)
-    #     score = sklearn_f1_score(aligned_df.iloc[:, 0], aligned_df.iloc[:, 1], average='micro')
-    #     # scores_for_meter = scores_for_meter.append(
-    #     #     {'score': score, 'num_samples': len(aligned_pred_df)},
-    #     #     ignore_index=True)
-    #     f1_scores.append(score)
 
-    # return f1_scores
+   
+
+        score = sklearn_f1_score(aligned_df.iloc[:, 0], aligned_df.iloc[:, 1])
+
+        f1_scores.append(score)
+
+    return f1_scores
     
     tolerance = 0.1
     ground_truth = list(ground_truth_dict.values())

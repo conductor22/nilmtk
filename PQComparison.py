@@ -25,7 +25,6 @@ df = create_df(dataset.buildings[1].elec.mains())
 
 start_date = pd.Timestamp("2024-08-02")
 end_date = pd.Timestamp("2024-08-30")
-end_date = pd.Timestamp("2024-08-30")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -39,7 +38,6 @@ dataset_elecs = dataset.buildings[1].elec.submeters()
 
 # Training plots
 train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
-# draw_plot(train_test_mains, "Trainset & Testset Mains")
 # draw_plot(train_test_mains, "Trainset & Testset Mains")
 
 train_elec = train.buildings[1].elec.submeters()
@@ -99,8 +97,6 @@ draw_plot(aaa)
 new_list = [dataset_main_df, aggregate, difference, average_hour, cum_average_hour]
 draw_plot(new_list, title="difference")
 
-
-fehler
 # Main train and test
 train_active = train.buildings[1].elec.mains().power_series_all_data(ac_type='active').to_frame()
 train_reactive = train.buildings[1].elec.mains().power_series_all_data(ac_type='reactive').to_frame()

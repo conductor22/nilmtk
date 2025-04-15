@@ -219,11 +219,8 @@ class FHMMExact(Disaggregator):
 
             if self.num_of_states > 0:
                 # User has specified the number of states for this appliance
-                print("name: ", appliance)
-                if appliance in ("unkown_2", "unkown_5", "unkown_9"):
-                    print("found 2, 5 or 9")
-                    # num_total_states = 3
-                    num_total_states = self.num_of_states
+                if appliance in ("Air conditioner", "Coffee maker", "Freezer", "Fridge"):
+                    num_total_states = load_kwargs.get('max_states', 2)
                 else:
                     num_total_states = self.num_of_states
 
@@ -237,7 +234,6 @@ class FHMMExact(Disaggregator):
 
             # Fit
             learnt_model[appliance].fit(X)
-            print("Learnt model for : "+appliance)
 
             # Check to see if there are any more chunks.
             # TODO handle multiple chunks per appliance.
@@ -253,13 +249,9 @@ class FHMMExact(Disaggregator):
                 
             new_learnt_models[meter] = hmm.GaussianHMM(startprob.size, "full")
             new_learnt_models[meter].startprob_ = startprob
-            print("startprob: ", startprob)
             new_learnt_models[meter].transmat_ = transmat
-            print("transmat: ", transmat)
             new_learnt_models[meter].means_ = means
-            print("means: ", means)
             new_learnt_models[meter].covars_ = covars
-            print("covars: ", covars)
             # UGLY! But works.
             self.meters.append(meter)
 
@@ -285,34 +277,22 @@ class FHMMExact(Disaggregator):
         # Array of learnt states
 
         test_prediction_list = []
-        print("starting disaggregation")
         for test_mains in test_mains_list:
             print(len(test_mains_list))
             print(test_mains)
             learnt_states_array = []
             if len(test_mains) == 0:
-                print("RIP")
                 tmp = pd.DataFrame(index = test_mains.index, columns = self.app_names)
                 test_prediction_list.append(tmp)
             else:
-                print("length found to be >0")
                 length = len(test_mains.index)
-                print("trying to reshape")
                 temp = test_mains.values.reshape(length, 1)
-                print("reshaped")
-                print("***********")
-                print("Before prediction")
                 prediction = self.model.predict(temp)
-                print("Prediction successful:", prediction)
                 learnt_states_array.append(prediction)
 
-                print("hello")
                 # Model
                 means = OrderedDict()
-                print("before for loop over items")
                 for elec_meter, model in self.individual.items():
-                    print("for loop for elecmeters")
-                    print("elec_meter: ", elec_meter, " | model: ", model)
                     means[elec_meter] = (
                         model.means_.round().astype(int).flatten().tolist())
                     means[elec_meter].sort()
@@ -320,7 +300,6 @@ class FHMMExact(Disaggregator):
                 decoded_states_array = []
 
                 for learnt_states in learnt_states_array:
-                    print("for loop in learnt_states")
                     [decoded_states, decoded_power] = decode_hmm(
                         len(learnt_states), means, means.keys(), learnt_states)
                     decoded_states_array.append(decoded_states)

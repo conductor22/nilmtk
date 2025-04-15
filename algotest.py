@@ -8,26 +8,24 @@ import nilmtk.utils
 from matplotlib import rcParams
 from plotting import draw_plot
 import pandas as pd
-import kmeansalgo
-import aggloalgo
+import mykmeans
+import myagglomerative
 
-# import nilmtk_contrib
-# print(nilmtk_contrib.__version__)
+def create_df(meter):
+    df_active_power = meter.power_series_all_data(ac_type='active').to_frame()
+    # df_reactive_power = meter.power_series_all_data(ac_type='reactive').to_frame()
+    # df = pd.concat([df_active_power, df_reactive_power], axis=1)
+    df = df_active_power
+    return df
 
 # Datensets erstellen
-dataset = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
-train = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
-test = DataSet("C:/Users/ieh-buergin/Desktop/eshl.h5")
+dataset = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlPQ.h5")
+train = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlPQ.h5")
+test = DataSet("C:/Users/ieh-buergin/Desktop/allcsv/eshlPQ.h5")
 
-df = dataset.buildings[1].elec.mains().power_series_all_data().to_frame()
-
-# start_date = df.index[0].date()
-# end_date = df.index[-1].date()
-# print(start_date)
-# print(end_date)
 
 start_date = pd.Timestamp("2024-08-02")
-end_date = pd.Timestamp("2024-08-03")
+end_date = pd.Timestamp("2024-08-09")
 
 ratio = 0.8 # 80% train, 20% test
 train_test_split_point = start_date + (end_date - start_date) * ratio
@@ -45,32 +43,39 @@ test.set_window(start=train_test_split_point, end=end_date)
 # test.set_window(start="2024-08-16", end="2024-09-01")
 
 
-# dataset.buildings[1].elec.draw_wiring_graph()
-
 # Training plots
-train_test_mains = [train.buildings[1].elec.mains(), test.buildings[1].elec.mains()]
+train_test_mains = [create_df(train.buildings[1].elec.mains()), create_df(test.buildings[1].elec.mains())]
+for main in train_test_mains:
+    main = main.where(main >= 0).fillna(method='ffill')
 draw_plot(train_test_mains, "Trainset & Testset Mains")
 
 train_elec = train.buildings[1].elec.submeters()
-all_meters = [train.buildings[1].elec.mains(), train.buildings[1].elec.submeters()]
-draw_plot(all_meters, "main & submeters")
+train_list = []
+for meter in train_elec.meters:
+    df = create_df(meter)
+    df = df.where(df >= 0).fillna(method='ffill')
+    train_list.append(df)
+train_list.append(create_df(train.buildings[1].elec.mains()))
+# draw_plot(train_list, "main & submeters")
 
 # Main train and test
-train_df = train.buildings[1].elec.mains().power_series_all_data().to_frame() # power_series_all_data() -> series.Series  ,   to_frame() -> frame.DataFrame
+train_df = create_df(train.buildings[1].elec.mains()) # power_series_all_data() -> series.Series  ,   to_frame() -> frame.DataFrame
+train_df = train_df.where(train_df >= 0).fillna(method='ffill')
 train_main = [train_df]
-test_df = test.buildings[1].elec.mains().power_series_all_data().to_frame()
+test_df = create_df(test.buildings[1].elec.mains())
+test_df = test_df.where(test_df >= 0).fillna(method='ffill')
 test_main = [test_df]
 
 
 
 
 # find out top k meters
-top_10 = train.buildings[1].elec.submeters().select_top_k(k=10) # Metergroup
+top_10 = train.buildings[1].elec.submeters().select_top_k(k=12) # Metergroup
 
 top_10_instances = []
 top_10_list = []    # list of dataframes
 for meter in top_10.meters:
-    df = meter.power_series_all_data().to_frame()
+    df = create_df(meter)
     top_10_list.append(df)
 
     instance = meter.instance()
@@ -85,7 +90,7 @@ train_appliances = []
 for i in top_10_instances:
     appliance = train.buildings[1].elec[i]
     appliance_name = "appliance " + str(i)
-    appliance_df = appliance.power_series_all_data().to_frame()
+    appliance_df = create_df(appliance)
     appliance_data = [appliance_df]
 
     # existing_names = [name for name, _ in train_appliances]
@@ -99,55 +104,62 @@ for i in top_10_instances:
 print(train_appliances)
 
 # FHMM disaggregation
-fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
-fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
-fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
-draw_plot(fhmm_prediction_list)
+# fhmm = FHMMExact({})    # 1 n Elemente als Input -> n Elemente als Output
+# fhmm.partial_fit(train_main=train_main, train_appliances=train_appliances)
+# fhmm_prediction_list = fhmm.disaggregate_chunk(test_main)   # list of dataframes (nur ein Eintrag)
+# draw_plot(fhmm_prediction_list)
 
 # KMEANS disaggregation
 kmeans_params = {'num_clusters': 2}
-kmeans = kmeansalgo.KMeansDisaggregator(kmeans_params)
+kmeans = mykmeans.KMeansDisaggregator(kmeans_params)
 kmeans.partial_fit(train_main)
 kmeans_prediction_list = kmeans.disaggregate_chunk(test_main)
-draw_plot(kmeans_prediction_list)
+#draw_plot(kmeans_prediction_list, title="Kmeans with 2 appliances")
 
 # KMEANS disaggregation
-kmeans2_params = {'num_clusters': 3}
-kmeans2 = kmeansalgo.KMeansDisaggregator(kmeans2_params)
+kmeans2_params = {'num_clusters': 5}
+kmeans2 = mykmeans.KMeansDisaggregator(kmeans2_params)
 kmeans2.partial_fit(train_main)
 kmeans2_prediction_list = kmeans2.disaggregate_chunk(test_main)
-draw_plot(kmeans2_prediction_list)
+draw_plot(kmeans2_prediction_list, title="Kmeans with 5 appliances")
 
 # KMEANS disaggregation
 kmeans3_params = {'num_clusters': 8}
-kmeans3 = kmeansalgo.KMeansDisaggregator(kmeans3_params)
+kmeans3 = mykmeans.KMeansDisaggregator(kmeans3_params)
 kmeans3.partial_fit(train_main)
 kmeans3_prediction_list = kmeans3.disaggregate_chunk(test_main)
-draw_plot(kmeans3_prediction_list)
+draw_plot(kmeans3_prediction_list, title="Kmeans with 8 appliances")
 
 # KMEANS disaggregation
-kmeans4_params = {'num_clusters': 12}
-kmeans4 = kmeansalgo.KMeansDisaggregator(kmeans4_params)
+kmeans4_params = {'num_clusters': 11}
+kmeans4 = mykmeans.KMeansDisaggregator(kmeans4_params)
 kmeans4.partial_fit(train_main)
 kmeans4_prediction_list = kmeans4.disaggregate_chunk(test_main)
-draw_plot(kmeans4_prediction_list)
+draw_plot(kmeans4_prediction_list, title="Kmeans with 11 appliances")
 
+# kmeans4_aggregate = kmeans4_prediction_list[0]["Appliance_1"].copy()
+# for appliance in kmeans4_prediction_list:
+#     df = create_df(appliance)
+#     kmeans4_aggregate += df
+# draw_plot(kmeans4_aggregate, title="aggregate of all meters kmeans4")
+
+kmeans_4_aggregate = []
+for i in kmeans4_prediction_list[0]:
+    df = kmeans4_prediction_list[0][i].to_frame()
+    df.columns = pd.MultiIndex.from_tuples([("power", "reactive")])
+    kmeans_4_aggregate.append(df)
+co_prediction_sum = sum(kmeans_4_aggregate)
+co_prediction_sum.columns = ["Submeter Aggregate"]
+test_df = test.buildings[1].elec.mains().power_series_all_data().to_frame()
+test_df = test_df.where(test_df >= 0).fillna(method='ffill')
+draw_plot([co_prediction_sum, test_df], title="Aggregate of appliances and Site Meter")
 
 # selbst mit 2 schon extrem aufwendig
-agglo_params = {'num_clusters': 2}
-agglo = aggloalgo.AgglomerativeClusteringDisaggregator(agglo_params)
-agglo.partial_fit(train_main)
-agglo_prediction_list = agglo.disaggregate_chunk(test_main)
-draw_plot(agglo_prediction_list)
-
-# müssen metergroups sein oder so
-# f1_fhmm = f1_score(fhmm_prediction_list[0], test_main)
-# f1_co = f1_score(co_prediction_list[0], test_main)
-# f1_mean = f1_score(mean_prediction_list[0], test_main)
-
-# print(f"F1 FHMM: {f1_fhmm}")
-# print(f"F1 CO: {f1_co}")
-# print(f"F1 Mean: {f1_mean}")
+# agglo_params = {'num_clusters': 2}
+# agglo = myagglomerative.AgglomerativeClusteringDisaggregator(agglo_params)
+# agglo.partial_fit(train_main)
+# agglo_prediction_list = agglo.disaggregate_chunk(test_main)
+# draw_plot(agglo_prediction_list)
 
 # create list of all meters in test dataset
 test_dataframe_list = []
